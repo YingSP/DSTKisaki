@@ -1,0 +1,1 @@
+GLOBAL.KISAKI_API = env -- SORA皮肤API定义需要

@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<Atlas>
+	<Texture filename="kisaki.tex" />
+	<Elements>
+		<Element name="kisaki.tex" u1="0.000488281" u2="0.546387" v1="0.297363" v2="0.999512" />
+	</Elements>
+</Atlas>
