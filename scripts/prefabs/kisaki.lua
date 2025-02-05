@@ -1,6 +1,8 @@
 -- 人物MOD固定写法，导入角色基础模板，需要自定义什么就直接覆盖原有属性/方法
 local MakePlayerCharacter = require("prefabs/player_common")
 
+local easing = require("easing")
+
 local avatar_name = "kisaki"
 local assets = {
     Asset("SCRIPT", "scripts/prefabs/player_common.lua"),
@@ -150,7 +152,7 @@ local function KisakiNeverMonkey(inst)
     -- 删除诅咒的方法不需要实现
     inst.components.cursable.RemoveCurse = function()
     end
-    -- 角色永远不能被诅咒
+    -- 角色永远不能被诅咒，正常只实现这个就够
     inst.components.cursable.IsCursable = function()
         return false
     end
@@ -182,7 +184,9 @@ local function refreshKisakiSpeed(inst)
             and
             (TUNING.KISAKI_GOST_FAST and TUNING.KISAKI_GOST_MOVE_SPEED or TUNING.KISAKI_MOVE_SPEED)
             or
-            (TUNING.KISAKI_HEALTH_PUNISHMENT and TUNING.KISAKI_MOVE_SPEED * inst.components.health:GetPercent() or TUNING.KISAKI_MOVE_SPEED)
+            (TUNING.KISAKI_HEALTH_PUNISHMENT and
+                TUNING.KISAKI_MOVE_SPEED * easing.inSine(inst.components.health:GetPercent(), 0.5, 1, 1) or
+                TUNING.KISAKI_MOVE_SPEED)
         inst.components.locomotor:SetExternalSpeedMultiplier(inst, "kisaki", kisaki_speed)
         -- inst.components.talker:Say("我的速度调整了，当前为" .. kisaki_speed)
     end
@@ -230,14 +234,16 @@ local function onbecameghost(inst)
     if TUNING.KISAKI_GOST_FAST then
         inst:DoTaskInTime(0.1, refreshKisakiSpeed)
     end
-    -- 在角色死亡地点生成物品，延时生成对上动画，如果监听的是death则需要改成2s
-    inst:DoTaskInTime(0.1, function()
-        local x, y, z = inst.Transform:GetWorldPosition()
-        local prefab = SpawnPrefab("cursed_monkey_token") -- TODO
-        if prefab ~= nil then
-            prefab.Transform:SetPosition(x, y, z)
-        end
-    end)
+    -- 在角色死亡地点生成物品，延时生成对上动画，监听ms_becameghost上下洞穴重新进游戏会重新生成
+    if TUNING.KISAKI_DEAD_SPAWN_PROP then
+        inst:DoTaskInTime(2, function()
+            local x, y, z = inst.Transform:GetWorldPosition()
+            local prefab = SpawnPrefab("amulet") -- 复活道具还没做，TODO
+            if prefab ~= nil then
+                prefab.Transform:SetPosition(x, y, z)
+            end
+        end)
+    end
 end
 
 -- 角色加载
@@ -297,12 +303,15 @@ local master_postinit = function(inst)
     KisakiSanityaura(inst)        -- 角色拥有一个每分钟回40点的回san光环（加了个原版怪物才有的组件）
     KisakiFastBuild(inst)         -- 角色快采集
 
-
+    -- 监听各种事件
     inst:ListenForEvent("ms_respawnedfromghost", onbecamehuman) -- 监听角色复活
-    inst:ListenForEvent("ms_becameghost", onbecameghost)        -- 监听角色死亡
+    inst:ListenForEvent("death", onbecameghost)        -- 监听角色死亡
     inst:ListenForEvent("healthdelta", refreshKisakiSpeed)      -- 监听角色血量变化
     inst:ListenForEvent("sanitydelta", refreshKisakiCourage)    -- 监听角色理智值变化
     inst.skeleton_prefab = nil                                  -- 角色死亡无骨架，掉落其他物品
+
+    -- 角色特殊内容
+    inst:AddComponent("kisaki_sanity") -- 角色魔法值
 
     -- 角色上下洞穴，结束游戏后重新进入游戏
     inst.OnLoad = OnKisakiLoad

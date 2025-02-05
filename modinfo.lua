@@ -160,6 +160,13 @@ configuration_options =
 		hover = "月社妃受到夜晚SAN值光环的影响比例"
 	},
 	{
+		name = "init_book_sanity",
+		label = "初始魔法值",
+		options = makeMathConfig(0, 200, 10),
+		default = 800,
+		hover = "月社妃0级时的魔法值"
+	},
+	{
 		name = "init_damage_proportion",
 		label = "角色初始伤害倍率",
 		options = makeMathPercentageConfig(0, 20, 5),
@@ -300,6 +307,26 @@ configuration_options =
 		},
 		default = true,
 		hover = "月社妃灵魂状态加速"
+	},
+	{
+		name = "init_dead_drop_disable",
+		label = "死亡不掉落",
+		options = {
+			{ description = "关闭", data = false, hover = "角色死亡掉落" },
+			{ description = "开启", data = true, hover = "角色死亡不掉落" }
+		},
+		default = true,
+		hover = "月社妃死亡不掉落"
+	},
+	{
+		name = "init_dead_spawn_prop",
+		label = "死亡掉落复活道具",
+		options = {
+			{ description = "关闭", data = false, hover = "角色死亡不掉落复活道具" },
+			{ description = "开启", data = true, hover = "角色死亡掉落复活道具" }
+		},
+		default = true,
+		hover = "月社妃死亡掉落复活道具"
 	},
 	{
 		name = "init_stronggr",

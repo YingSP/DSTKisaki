@@ -14,7 +14,11 @@ Assets = {
     Asset("ATLAS", "images/avatars/avatar_kisaki.xml"),
     Asset("ATLAS", "images/avatars/avatar_ghost_kisaki.xml"),
     -- 自我审视按钮图片
-    Asset("ATLAS", "images/avatars/self_inspect_kisaki.xml")
+    Asset("ATLAS", "images/avatars/self_inspect_kisaki.xml"),
+
+
+    -- 角色组件UI
+    Asset('ANIM', 'anim/status_kisaki_sanity.zip'),
 }
 
 -- 注册地图图标(还需要在prefeb引用)
