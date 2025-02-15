@@ -81,28 +81,28 @@ function KisakiSanityBadge:SetPercent(val, max)
 end
 
 function KisakiSanityBadge:SetRate()
-    if self.owner == nil or self.owner.replica == nil or self.owner.replica.kisaki_sanity == nil then
+    if self.owner == nil or self.owner.replica == nil or self.owner.replica.kisaki_magic == nil then
         return
     end
     local anim = "neutral"
-    local kisaki_sanity = self.owner.replica.kisaki_sanity
+    local kisaki_magic = self.owner.replica.kisaki_magic
     -- 角色睡觉时固定动画
     if self.owner:HasTag("sleeping") and
-        kisaki_sanity ~= nil and kisaki_sanity:GetPercent() < 1 then
+        kisaki_magic ~= nil and kisaki_magic:GetPercent() < 1 then
         anim = "arrow_loop_increase_most"
     else
         -- 按速率取值
-        local ratescale = kisaki_sanity:GetRateScale()
+        local ratescale = kisaki_magic:GetRateScale()
         if ratescale == RATE_SCALE.INCREASE_LOW or
             ratescale == RATE_SCALE.INCREASE_MED or
             ratescale == RATE_SCALE.INCREASE_HIGH then
-            if kisaki_sanity:GetPercent() < 1 then
+            if kisaki_magic:GetPercent() < 1 then
                 anim = RATE_SCALE_ANIM[ratescale]
             end
         elseif ratescale == RATE_SCALE.DECREASE_LOW or
             ratescale == RATE_SCALE.DECREASE_MED or
             ratescale == RATE_SCALE.DECREASE_HIGH then
-            if kisaki_sanity:GetPercent() > 0 then
+            if kisaki_magic:GetPercent() > 0 then
                 anim = RATE_SCALE_ANIM[ratescale]
             end
         end
@@ -118,12 +118,12 @@ end
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 function KisakiSanityBadge:OnUpdate(dt)
-    local kisaki_sanity = self.owner.replica.kisaki_sanity
-    if TheNet:IsServerPaused() or not kisaki_sanity then return end
+    local kisaki_magic = self.owner.replica.kisaki_magic
+    if TheNet:IsServerPaused() or not kisaki_magic then return end
     -- 箭头动画
     self:SetRate()
     -- 填充物动画
-    self:SetPercent(kisaki_sanity:GetPercent(), kisaki_sanity:GetMax())
+    self:SetPercent(kisaki_magic:GetPercent(), kisaki_magic:GetMax())
 end
 
 return KisakiSanityBadge

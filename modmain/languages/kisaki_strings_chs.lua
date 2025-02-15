@@ -44,7 +44,7 @@ STRINGS.CHARACTERS.KISAKI = {
         SPOILED = "吃这个简直是在折磨我！",
         STALE = "你最好丢掉它，而不是让我吃掉。",
         INVALID = "别让我吃这个，琉璃。",
-        YUCKY = "停下！停下！停下！",
+        YUCKY = "求你别让我吃这个！",
 
         COOKED = kisaki_cant_use,
         DRIED = kisaki_cant_use,

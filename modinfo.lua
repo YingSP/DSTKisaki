@@ -62,6 +62,18 @@ local function makeMathPercentageConfig(min, num, step)
 	return list
 end
 
+local function makeMathThousandthousandPercentageConfig(min, num, step)
+	local list = {}
+	for i = 0, num, 1 do
+		local data = min + i * step
+		list[i + 1] = {
+			description = data .. "‰",
+			data = data / 1000
+		}
+	end
+	return list
+end
+
 -- 通用方法，设置的标题构造
 -- name标题名称
 local function makeTitle(name)
@@ -92,6 +104,16 @@ configuration_options =
 		default = 2,
 		hover = "MOD难度设置"
 	},
+	{
+		name = "mod_data_save",
+		label = "角色换人数据不丢失",
+		options = {
+			{ description = "关闭", data = false, hover = "每次换人后都是一个新角色" },
+			{ description = "开启", data = true, hover = "换人后可继承上次进入世界的数据" },
+		},
+		default = true,
+		hover = "角色等级/成就/技能树数据存储"
+	},
 	makeTitle("角色基础属性设置"),
 	{
 		name = "init_health",
@@ -101,11 +123,25 @@ configuration_options =
 		hover = "月社妃0级时的血量上限"
 	},
 	{
+		name = "init_health_up",
+		label = "升级血量上限提升",
+		options = makeMathConfig(0, 20, 0.1),
+		default = 0.5,
+		hover = "月社妃每次升级提升的血量上限数值"
+	},
+	{
 		name = "init_defense",
 		label = "初始减防值",
 		options = makeMathPercentageConfig(-100, 30, 5),
 		default = -0.8,
 		hover = "月社妃0级时的减防值"
+	},
+	{
+		name = "init_defense_up",
+		label = "升级减防值提升",
+		options = makeMathThousandthousandPercentageConfig(0, 20, 1),
+		default = 0.01,
+		hover = "月社妃每次升级提升的防御力数值"
 	},
 	{
 		name = "init_fire_damage_range",
@@ -118,8 +154,15 @@ configuration_options =
 		name = "init_hunger",
 		label = "初始饱食度",
 		options = makeMathConfig(40, 32, 5),
-		default = 85,
+		default = 95,
 		hover = "月社妃0级时的饱食度上限"
+	},
+	{
+		name = "init_hunger_up",
+		label = "升级饱食上限提升",
+		options = makeMathConfig(0, 20, 0.1),
+		default = 0.5,
+		hover = "月社妃每次升级提升的饱食度上限"
 	},
 	{
 		name = "init_hunger_speed",
@@ -136,11 +179,18 @@ configuration_options =
 		hover = "月社妃0级时的精神值上限"
 	},
 	{
+		name = "init_hsanity_up",
+		label = "升级精神上限提升",
+		options = makeMathConfig(0, 20, 0.5),
+		default = 2.5,
+		hover = "月社妃每次升级提升的精神度上限"
+	},
+	{
 		name = "init_hsanity_monster",
 		label = "受到疯狂光环的影响",
 		options = makeMathPercentageConfig(-100, 60, 5),
 		default = 0,
-		hover = "月社妃受到怪物SAN值光环的影响比例"
+		hover = "月社妃受到怪物SAN值光环的影响基础比例"
 	},
 	{
 		name = "init_hsanity_lunacy",
@@ -150,7 +200,7 @@ configuration_options =
 			{ description = "开启", data = true, hover = "角色免疫启蒙光环" }
 		},
 		default = true,
-		hover = "月社妃是否免疫启蒙光环（会同步免疫双子魔眼的影响）"
+		hover = "月社妃是否免疫启蒙光环"
 	},
 	{
 		name = "init_hsanity_dark",
@@ -167,11 +217,25 @@ configuration_options =
 		hover = "月社妃0级时的魔法值"
 	},
 	{
+		name = "init_book_sanity_up",
+		label = "升级魔法上限提升",
+		options = makeMathConfig(0, 100, 1),
+		default = 20,
+		hover = "月社妃每次升级提升的魔法值上限"
+	},
+	{
 		name = "init_damage_proportion",
 		label = "角色初始伤害倍率",
 		options = makeMathPercentageConfig(0, 20, 5),
 		default = 0.3,
 		hover = "月社妃0级时的伤害倍率"
+	},
+	{
+		name = "init_damage_proportion_up",
+		label = "升级伤害倍率提升",
+		options = makeMathThousandthousandPercentageConfig(0, 20, 1),
+		default = 0.002,
+		hover = "月社妃每次升级提升的伤害倍率"
 	},
 	{
 		name = "init_speed",
@@ -286,7 +350,7 @@ configuration_options =
 			{ description = "开启", data = true, hover = "角色附近队友有回san光环" }
 		},
 		default = true,
-		hover = "月社妃附近队友是否有回san"
+		hover = "月社妃附近队友是否会回san"
 	},
 	{
 		name = "init_fast_build",
@@ -357,5 +421,29 @@ configuration_options =
 		},
 		default = true,
 		hover = "月社妃受到疯狂光环的影响是否随SAN降低降低"
-	}
+	},
+	makeTitle("开发者设置"),
+	{
+		name = "developer_log_level",
+		label = "日志级别",
+		options = {
+			{ description = "DEBUG", data = 1, hover = "DEBUG" },
+			{ description = "INFO", data = 2, hover = "INFO" },
+			{ description = "DECLARE", data = 3, hover = "DECLARE" },
+			{ description = "WARN", data = 4, hover = "WARN" },
+			{ description = "ERROR", data = 5, hover = "ERROR" },
+		},
+		default = 5,
+		hover = "别动！除非你想让你的服务器变卡！"
+	},
+	{
+		name = "developer_debug_cmd",
+		label = "开发者命令",
+		options = {
+			{ description = "关闭", data = false, hover = "禁用开发者命令" },
+			{ description = "开启", data = true, hover = "启用开发者命令" }
+		},
+		default = false,
+		hover = "启用控制台命令，获取你可以拿来理赔"
+	},
 }
