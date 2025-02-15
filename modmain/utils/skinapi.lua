@@ -202,7 +202,6 @@ local timelastest = 0
 local mt = getmetatable(TheInventory)
 local oldTheInventoryCheckOwnership = TheInventory.CheckOwnership
 mt.__index.CheckOwnership = function(i, name, ...)
-    -- print(i,name,...)
     name = namemaps[name] or name
     if type(name) == "string" and (characterskins[name] or itemskins[name]) then
         if characterskins[name] and characterskins[name].checkfn then
@@ -218,7 +217,6 @@ mt.__index.CheckOwnership = function(i, name, ...)
 end
 local oldTheInventoryCheckOwnershipGetLatest = TheInventory.CheckOwnershipGetLatest
 mt.__index.CheckOwnershipGetLatest = function(i, name, ...)
-    -- print(i,name,...)
     name = namemaps[name] or name
     if type(name) == "string" and (characterskins[name] or itemskins[name]) then
         if characterskins[name] and characterskins[name].checkfn then

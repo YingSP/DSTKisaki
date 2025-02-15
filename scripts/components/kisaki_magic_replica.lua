@@ -1,8 +1,8 @@
 local Sanity = Class(function(self, inst)
     self.inst = inst
-    self.max = net_float(inst.GUID, "kisaki_sanity.max")
-    self.current = net_float(inst.GUID, "kisaki_sanity.current")
-    self.ratescale = net_ushortint(inst.GUID, "kisaki_sanity.ratescale")
+    self.max = net_float(inst.GUID, "kisaki_magic.max")
+    self.current = net_float(inst.GUID, "kisaki_magic.current")
+    self.ratescale = net_ushortint(inst.GUID, "kisaki_magic.ratescale")
 end)
 
 function Sanity:SetMax(amount) self.max:set(amount) end

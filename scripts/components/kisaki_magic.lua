@@ -1,4 +1,5 @@
 local easing = require("easing")
+local log = require("utils/kisakilogger")
 
 local FIRST_CURRENT = 200
 local SANE_MIN = 100
@@ -16,8 +17,13 @@ local PLAYER_RANGE = 10                -- 查找玩家的距离
 
 -- 更新逻辑
 local function Heal(self, inst)
-    if inst:HasTag('playerghost') or not inst.components.kisaki_sanity then return end -- 角色死亡停止
-    print("开始更新数据")
+    if inst:HasTag('playerghost') or not inst.components.kisaki_magic then return end -- 角色死亡停止
+    if self.ignore then
+        self.rate = 0
+        self.ratescale = RATE_SCALE.NEUTRAL
+        return
+    end
+    log.debug("开始更新角色魔法数据")
     -- 增加值
     local dapper_delta_up = 0
     -- 减少值
@@ -29,7 +35,7 @@ local function Heal(self, inst)
     else
         dapper_delta_down = dapper_delta_down + self.dapperness
     end
-    print(string.format("自带BUFF处理后的速率为: %2.2f + %2.2f", dapper_delta_up, dapper_delta_down))
+    log.debug(string.format("自带BUFF处理后的魔法恢复速率为: %2.2f + %2.2f", dapper_delta_up, dapper_delta_down))
 
     -- 处理角色装备影响
     for k, v in pairs(self.inst.components.inventory.equipslots) do
@@ -53,7 +59,7 @@ local function Heal(self, inst)
             end
         end
     end
-    print(string.format("装备处理后的速率为: %2.2f + %2.2f", dapper_delta_up, dapper_delta_down))
+    log.debug(string.format("装备处理后的魔法恢复速率为: %2.2f + %2.2f", dapper_delta_up, dapper_delta_down))
 
     -- 处理角色潮湿值影响
     local moisture = self.inst.components.moisture
@@ -61,7 +67,7 @@ local function Heal(self, inst)
         dapper_delta_down = dapper_delta_down + easing.inSine(moisture:GetMoisture(), 0,
             MOISTURE_SANITY_PENALTY_MAX, moisture:GetMaxMoisture())
     end
-    print(string.format("角色潮湿处理后的速率为: %2.2f + %2.2f", dapper_delta_up, dapper_delta_down))
+    log.debug(string.format("角色潮湿处理后的魔法恢复速率为: %2.2f + %2.2f", dapper_delta_up, dapper_delta_down))
 
     -- 处理周围的SAN值光环和魔法值光环
     local SANITYRECALC_MUST_TAGS = { "sanityaura" }
@@ -80,8 +86,8 @@ local function Heal(self, inst)
             end
         end
         -- 计算魔法值光环
-        if v.components.kisaki_sanityaura ~= nil then
-            local aura_val = v.components.kisaki_sanityaura:GetAura(self.inst)
+        if v.components.kisaki_magicaura ~= nil then
+            local aura_val = v.components.kisaki_magicaura:GetAura(self.inst)
             if aura_val > 0 then
                 dapper_delta_up = dapper_delta_up + aura_val
             else
@@ -89,7 +95,7 @@ local function Heal(self, inst)
             end
         end
     end
-    print(string.format("SAN值光环处理后的速率为: %2.2f + %2.2f", dapper_delta_up, dapper_delta_down))
+    log.debug(string.format("SAN值光环处理后的魔法恢复速率为: %2.2f + %2.2f", dapper_delta_up, dapper_delta_down))
 
     -- 如果人物在睡觉，快速恢复魔法值
     if inst:HasTag("sleeping") then
@@ -106,11 +112,11 @@ local function Heal(self, inst)
             dapper_delta_down = dapper_delta_down + PLAYER_ADD_SPEED
         end
     end
-    print(string.format("玩家判断处理后的速率为: %2.2f + %2.2f", dapper_delta_up, dapper_delta_down))
+    log.debug(string.format("玩家判断处理后的速率为: %2.2f + %2.2f", dapper_delta_up, dapper_delta_down))
 
     -- 计算速率
     self.rate = dapper_delta_up * self.rate_modifier_up + dapper_delta_down * self.rate_modifier_down
-    print(string.format("最终速率为: %2.2f", self.rate))
+    log.debug(string.format("魔法恢复最终速率为: %2.2f", self.rate))
     self.ratescale =
         (self.rate > 2 and RATE_SCALE.INCREASE_HIGH) or
         (self.rate > 1 and RATE_SCALE.INCREASE_MED) or
@@ -126,19 +132,19 @@ end
 ----------------------------------------------------------------------------监听-------------------------------------------------------------------------------
 
 local function onmax(self, max)
-    self.inst.replica.kisaki_sanity:SetMax(max)
+    self.inst.replica.kisaki_magic:SetMax(max)
 end
 
 local function oncurrent(self, current)
-    self.inst.replica.kisaki_sanity:SetCurrent(current)
+    self.inst.replica.kisaki_magic:SetCurrent(current)
 end
 
 local function onratescale(self, ratescale)
-    self.inst.replica.kisaki_sanity:SetRateScale(ratescale)
+    self.inst.replica.kisaki_magic:SetRateScale(ratescale)
 end
 
 local function onsane(self, sane)
-    self.inst.replica.kisaki_sanity:SetIsSane(sane)
+    self.inst.replica.kisaki_magic:SetIsSane(sane)
 end
 
 -- 角色魔法值过低时
@@ -163,8 +169,9 @@ end
 -- 角色复活后如果魔法值太低，则设为最低值
 local function onbecamehuman(inst)
     inst:DoTaskInTime(0.1, function()
-        if inst.components.kisaki_sanity and inst.components.kisaki_sanity.current < SANE_MIN then
-            inst.components.kisaki_sanity.current = SANE_MIN
+        if inst.components.kisaki_magic and inst.components.kisaki_magic.current < SANE_MIN then
+            log.info("角色复活，当前角色魔法值过低，重设魔法值")
+            inst.components.kisaki_magic.current = SANE_MIN
         end
     end)
 end
@@ -173,20 +180,28 @@ end
 local function onkilled(player, data)
     if data ~= nil and data.victim ~= nil then
         local boss = data.victim
-        local kisaki_sanity = player.components.kisaki_sanity
-        if kisaki_sanity and boss:HasTag("epic") and boss.components.health then
-            print(string.format("击杀恢复: %s %2.2f", boss.prefab, boss.components.health.maxhealth))
-            kisaki_sanity:DoDelta(boss.components.health.maxhealth / 40)
+        local kisaki_magic = player.components.kisaki_magic
+        if kisaki_magic and boss:HasTag("epic") and boss.components.health
+            and not (boss.components.kisaki_kill_info and boss.components.kisaki_kill_info:GetKiller("kisaki_magic" .. player.userid)) then
+            log.info(string.format("角色击杀了BOSS，恢复魔力: %s %2.2f", boss.prefab, boss.components.health.maxhealth / 40))
+            kisaki_magic:DoDelta(boss.components.health.maxhealth / 40)
+            -- 防止鞭尸
+            if not boss.components.kisaki_kill_info then
+                boss:AddComponent("kisaki_kill_info")
+            end
+            boss.components.kisaki_kill_info:SetKiller("kisaki_magic" .. player.userid)
         end
     end
 end
 
 -- 角色吃东西可以恢复魔力值
 local function oneat(player, data)
-    local kisaki_sanity = player.components.kisaki_sanity
-    if kisaki_sanity and data and data.food and data.food.components.edible then
+    local kisaki_magic = player.components.kisaki_magic
+    if kisaki_magic and data and data.food and data.food.components.edible then
         local food_edible = data.food.components.edible
-        kisaki_sanity:DoDelta(food_edible.hungervalue * 0.05 + food_edible.sanityvalue * 0.15 + food_edible.healthvalue * 0.2)
+        log.info("角色吃了点东西，根据食物属性恢复魔力值")
+        kisaki_magic:DoDelta(food_edible.hungervalue * 0.05 + food_edible.sanityvalue * 0.15 +
+            food_edible.healthvalue * 0.2)
         if data.food and data.food:HasTag("kisaki_food") then
             player.components.talker:Say("我还想吃点这个！") -- 做了专属料理后再实现，TODO
         end
@@ -208,8 +223,9 @@ local Sanity = Class(function(self, inst)
     -- self.penalty = 0                                          -- 死亡惩罚影响的上限（黑色部分）
     self.ratescale = RATE_SCALE.NEUTRAL                          -- 速率状态，用于更新动画
     self.rate = 0                                                -- 变化速率，计算和debug用
+    self.ignore = nil                                            -- 魔力值锁死
 
-    inst:DoPeriodicTask(1, function() Heal(self, inst) end, 0.1) -- 延时2s后开始每秒一次的定时任务
+    inst:DoPeriodicTask(1, function() Heal(self, inst) end, 0.1) -- 延时0.1s后开始每秒一次的定时任务
 
     inst:ListenForEvent("ms_respawnedfromghost", onbecamehuman)  -- 监听角色复活
     inst:ListenForEvent("killed", onkilled)                      -- 监听角色击杀
@@ -227,7 +243,7 @@ end, nil, {
 -- 不做校验，可信域内调用
 function Sanity:SetMax(amount) self.max = math.max(1, amount) end
 
-function Sanity:SetCurrent(amount) self.current = math.max(0, amount) end
+function Sanity:SetCurrent(amount) self.current = math.min(math.max(0, amount), self.max) end
 
 function Sanity:SetDapperness(amount) self.dapperness = amount end
 
@@ -242,6 +258,8 @@ function Sanity:SetAuraMult(amount) self.aura_mult = amount end
 function Sanity:SetDappernessMult(amount) self.dapperness_mult = amount end
 
 function Sanity:SetIsSane(amount) self.sane = amount end
+
+function Sanity:SetIgnore(amount) self.ignore = amount end
 
 function Sanity:GetMax() return self.max end
 
@@ -261,10 +279,20 @@ function Sanity:GetDappernessMult() return self.dapperness_mult end
 
 function Sanity:GetIsSane() return self.sane end
 
+function Sanity:GetIgnore() return self.ignore end
+
 function Sanity:GetDebugString()
-    return string.format("当前魔法值信息为：%2.2f / %2.2f 速率： %2.4f. 恢复加成： %2.2f, 降低加成： %2.2f, 魔法是否充盈 %s",
-        self.current, self.max, self.rate, self.rate_modifier_up, self.rate_modifier_down,
-        self.sane and "true" or "false")
+    local format = "======================================================================================\r\n"
+    format = format .. "当前玩家：%s\r\n"
+    format = format .. "魔力值状态（当前值/最大值）：%2.2f/%2.2f\r\n"
+    format = format .. "魔力值计算因素（自带影响光环/正面影响倍率/负面影响倍率）：%2.2f/%2.2f%%/%2.2f%%\r\n"
+    format = format .. "魔力值计算因素（装备影响倍率/疯狂光环影响倍率/魔力变化速率）：%2.2f%%/%2.2f%%/%2.2f\r\n"
+    format = format .. "其他（是否魔法值充盈/是否魔法值锁死）：%s/%s\r\n"
+    format = format .. "======================================================================================"
+    local info = string.format(format, self.inst.name, self.current, self.max, self.dapperness,
+        self.rate_modifier_up * 100, self.rate_modifier_down * 100, self.dapperness_mult * 100, self.aura_mult * 100,
+        self.rate, self.sane and "true" or "false", self.ignore and "true" or "false")
+    return info
 end
 
 function Sanity:IsSane()
@@ -281,9 +309,11 @@ function Sanity:SetPercent(percent)
 end
 
 function Sanity:DoDelta(val)
-    print(string.format("开始增加，增加值为: %2.2f", val))
+    -- 上帝模式
+    if self.ignore then
+        return
+    end
     self.current = math.clamp(self.current + val, 0, self.max) -- 恢复和消耗都不能超出区间
-    print(string.format("已增加，当前魔法值为: %2.2f", self.current))
     -- 检查是否魔法值过低
     if self.sane and self.current < SANE_MIN then
         self.sane = false
@@ -297,6 +327,7 @@ end
 ----------------------------------------------------------------------------加载时运行---------------------------------------------------------------------------
 
 function Sanity:OnSave()
+    log.debug("执行了魔法组件内部存储魔法数据的方法")
     return
     {
         current = self.current,
@@ -310,6 +341,7 @@ function Sanity:OnSave()
 end
 
 function Sanity:OnLoad(data)
+    log.debug("执行了魔法组件内部读取魔法数据的方法")
     if not data then return end
     self.max = data.max ~= nil and data.max or TUNING.KISAKI_BOOK_SANITY
     if data.current ~= nil then

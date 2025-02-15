@@ -2,6 +2,7 @@
 local MakePlayerCharacter = require("prefabs/player_common")
 
 local easing = require("easing")
+local log = require("utils/kisakilogger")
 
 local avatar_name = "kisaki"
 local assets = {
@@ -26,6 +27,7 @@ local start_inv = TUNING.GAMEMODE_STARTING_ITEMS.DEFAULT.KISAKI
 
 -- 这个函数将在服务器和客户端都会执行(一般用于添加小地图标签等动画文件或者需要主客机都执行的组件)
 local common_postinit = function(inst)
+    log.info("模组执行了客户端+服务器端角色初始化方法")
     -- 固定先添加角色标签
     inst:AddTag(avatar_name)
     -- 角色可造书
@@ -34,6 +36,8 @@ local common_postinit = function(inst)
     if TUNING.KISAKI_READ_ENABLE then inst:AddTag("reader") end
     -- 不会吓跑小动物，会吓跑鸟（不会吓跑鸟但是不能直接捡起鸟是什么debuff）
     if TUNING.KISAKI_IS_FAMILIAR then inst:RemoveTag("scarytoprey") end
+    -- 角色周围的乌鸦会变为金丝雀
+    inst:AddTag("scarecrow")
     -- 角色武器不脱手
     if TUNING.KISAKI_STRONGGER then inst:AddTag("stronggrip") end
     -- 角色闲置动画
@@ -63,6 +67,8 @@ local function OnKisakiReadFn(inst, book)
             TheWorld.components.shadowcreaturespawner:SpawnShadowCreature(inst)
         end
     end
+    -- 推一个事件用于记录
+    inst:PushEvent("kisaki_read", { book = book })
 end
 
 -- 角色读书
@@ -166,6 +172,27 @@ local function KisakiSanityaura(inst)
     end
 end
 
+-- 角色死亡不掉落
+local function KisakiDeathNoDrop(inst)
+    if TUNING.KISAKI_DEAD_DROP_DISABLE and inst.components.inventory then
+        -- 单改这个没用
+        local inventory = inst.components.inventory
+        inventory:DisableDropOnDeath()
+        -- 修改全部丢弃的方法
+        local oldDropEverythingFn = inventory.DropEverything
+        inventory.DropEverything = function(self, ondeath, keepequip)
+            -- 角色已经死亡的情况下才不掉落，人物固定带有生命组件，不过还是校验下
+            -- T键杀勿cure
+            if not inst.components.health or inst.components.health:IsDead() then
+                return
+            end
+            if oldDropEverythingFn then
+                oldDropEverythingFn(self, ondeath, keepequip)
+            end
+        end
+    end
+end
+
 -- 角色快速制作
 local function KisakiFastBuild(inst)
     if TUNING.KISAKI_FSAT_BUILD then
@@ -195,9 +222,13 @@ end
 -- 刷新角色勇敢值（低理智状态下更害怕怪物）
 local function refreshKisakiCourage(inst)
     if inst.components.sanity and not inst:HasTag('playerghost') then
-        local kisaki_sanity_percent = inst.components.sanity:GetPercent()
         local kisaki_neg_aura_mult_add = 8
+        -- 如果角色处于强制0SAN状态下（骨盔等）
+        if inst.components.sanity.inducedinsanity then
+            kisaki_neg_aura_mult_add = 0
+        end
         -- 判断理智值状态，不同模式有不同的判断
+        local kisaki_sanity_percent = inst.components.sanity:GetPercent()
         if inst.components.sanity.mode == 0 then -- SAN值模式，SANITY_MODE_INSANITY
             if not TUNING.KISAKI_SANITY_PUNISHMENT or kisaki_sanity_percent > 0.5 then
                 kisaki_neg_aura_mult_add = 0
@@ -248,12 +279,14 @@ end
 
 -- 角色加载
 local function OnKisakiLoad(inst)
+    log.info("模组执行了当角色加载时执行的方法")
     -- 刷新下速度
     refreshKisakiSpeed(inst)
 end
 
 -- 角色通过绚丽之门进入世界
 local function OnKisakiNewSpawn(inst)
+    log.info("模组执行了当角色出生时执行的方法")
     OnKisakiLoad(inst)
 end
 
@@ -261,6 +294,7 @@ end
 
 -- 这里的的函数只在主机执行(一般组件之类的都写在这里)
 local master_postinit = function(inst)
+    log.info("模组执行了单服务器端角色初始化方法")
     -- 人物音效
     inst.soundsname = "wendy"
     -- 人物闲置时动作（温蒂）
@@ -270,9 +304,9 @@ local master_postinit = function(inst)
 
     -- 三维相关
     inst.components.health:SetMaxHealth(TUNING.KISAKI_HEALTH)
-    inst.components.health.fire_damage_scale = TUNING
-        .KISAKI_FIRE_DAMAGE                                                                                         -- 人物受到火焰伤害更高，默认角色为1
+    inst.components.health.externalfiredamagemultipliers:SetModifier(inst, TUNING.KISAKI_FIRE_DAMAGE, "kisaki")     -- 人物受到火焰伤害更高，默认角色为1
     inst.components.health.externalabsorbmodifiers:SetModifier(inst, TUNING.KISAKI_DAMAGE_REDUCTION_RATE, "kisaki") -- 人物自带防御系数，默认0
+    inst.components.health.playerabsorb = 1                                                                         -- 对玩家减伤100%
     inst.components.hunger:SetMax(TUNING.KISAKI_HUNGER)
     inst.components.hunger:SetRate(TUNING.WILSON_HUNGER_RATE * TUNING.KISAKI_HUNGER_RATE)                           -- 饥饿速度，默认一天75
     inst.components.hunger:SetKillRate(TUNING.KISAKI_HEALTH / TUNING.STARVE_KILL_TIME)                              -- 饥饿归零后掉血速率，角色血上限较少时最好设置下，默认为1
@@ -293,6 +327,8 @@ local master_postinit = function(inst)
     -- 攻击相关
     inst.components.combat.attackrange = TUNING.KISAKI_HIT_RANGE -- 攻击范围，默认是2
     inst.components.combat.hitrange = TUNING.KISAKI_HIT_RANGE    -- 攻击可以打到的范围，默认是2
+    -- 角色死亡
+    inst.skeleton_prefab = nil                                   -- 角色死亡无骨架，掉落其他物品
 
     -- 特殊能力
     KisakiReadInit(inst)          -- 角色读书能力
@@ -300,18 +336,20 @@ local master_postinit = function(inst)
     KisakiFoodInit(inst)          -- 角色食物喜恶
     KisakiPlantAffinityInit(inst) -- 角色抗荆棘能力
     KisakiNeverMonkey(inst)       -- 角色抵抗诅咒饰品，不设开关
-    KisakiSanityaura(inst)        -- 角色拥有一个每分钟回40点的回san光环（加了个原版怪物才有的组件）
-    KisakiFastBuild(inst)         -- 角色快采集
+    KisakiSanityaura(inst)        -- 角色拥有一个每分钟回5点的回san光环（加了个原版怪物才有的组件）
+    KisakiDeathNoDrop(inst)       -- 死亡不掉落
+    KisakiFastBuild(inst)         -- 角色快速制作，TODO，后面丢技能树去
 
     -- 监听各种事件
-    inst:ListenForEvent("ms_respawnedfromghost", onbecamehuman) -- 监听角色复活
-    inst:ListenForEvent("death", onbecameghost)        -- 监听角色死亡
-    inst:ListenForEvent("healthdelta", refreshKisakiSpeed)      -- 监听角色血量变化
-    inst:ListenForEvent("sanitydelta", refreshKisakiCourage)    -- 监听角色理智值变化
-    inst.skeleton_prefab = nil                                  -- 角色死亡无骨架，掉落其他物品
+    inst:ListenForEvent("ms_respawnedfromghost", onbecamehuman)            -- 监听角色复活
+    inst:ListenForEvent("death", onbecameghost)                            -- 监听角色死亡
+    inst:ListenForEvent("healthdelta", refreshKisakiSpeed)                 -- 监听角色血量变化
+    -- inst:ListenForEvent("sanitydelta", refreshKisakiCourage)            -- 监听角色理智值变化，夜晚每秒执行30次，对性能影响太离谱，改为定时任务
+    inst:DoPeriodicTask(0.3, function() refreshKisakiCourage(inst) end, 1) -- 每0.3s监听下角色的san值变动
 
     -- 角色特殊内容
-    inst:AddComponent("kisaki_sanity") -- 角色魔法值
+    inst:AddComponent("kisaki_magic") -- 角色魔法值
+    inst:AddComponent("kisaki_level") -- 角色等级
 
     -- 角色上下洞穴，结束游戏后重新进入游戏
     inst.OnLoad = OnKisakiLoad

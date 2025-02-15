@@ -9,7 +9,7 @@ GLOBAL.setmetatable(env, {
 -- 导入模组常用方法
 modimport("modmain/utils/api")
 -- 导入皮肤api
-modimport("modmain/framework/skinapi")
+modimport("modmain/utils/skinapi")
 -- 加载角色全局配置
 modimport("modmain/common/tuning")
 -- 加载模组动画/声音资源
@@ -22,13 +22,18 @@ modimport("modmain/common/containers")
 modimport("modmain/languages/kisaki_strings_chs")
 -- 加载模组特效
 modimport("modmain/common/fx")
--- 加载模组UI
-modimport("modmain/common/ui")
 -- 修改原版组件/预制物逻辑
 modimport("modmain/common/hook")
+-- 增加原版通信内容
+modimport("modmain/common/rpc")
 -- 加载模组预制物
 modimport("modmain/common/prefabs")
-
+-- 加载模组UI
+modimport("modmain/common/ui")
+-- debug命令
+if TUNING.KISAKI_DEBUGER then
+    modimport("modmain/common/debug")
+end
 
 -- 添加角色(无皮肤定义)
 AddModCharacter("kisaki", "FEMALE") --MALE男, FEMALE女, ROBOT机器人, NEUTRAL中性, PLURAL双性
