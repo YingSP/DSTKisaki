@@ -78,6 +78,7 @@ end)
 local recipe_images = {
     kisaki_magic = { atlas = "images/inventoryimages/widget/kisaki_magic.xml", image = "kisaki_magic.tex" },
     kisaki_ether = { atlas = "images/inventoryimages/prefabs/kisaki_ether.xml", image = "kisaki_ether.tex" },
+    kisaki_pack = { atlas = "images/inventoryimages/prefabs/kisaki_pack.xml", image = "kisaki_pack.tex" },
     kisaki_talisman_aquarius = { atlas = "images/inventoryimages/prefabs/kisaki_constellation_talismans.xml", image = "kisaki_talisman_aquarius.tex" },
     kisaki_talisman_pisces = { atlas = "images/inventoryimages/prefabs/kisaki_constellation_talismans.xml", image = "kisaki_talisman_pisces.tex" },
     kisaki_talisman_aries = { atlas = "images/inventoryimages/prefabs/kisaki_constellation_talismans.xml", image = "kisaki_talisman_aries.tex" },
@@ -94,6 +95,22 @@ local recipe_images = {
 }
 
 local recipe_all = {
+    -- 封神笔
+    {
+        recipe_name = 'kisaki_pack',
+        config = {
+            numtogive = 4,
+        },
+        ingredients_data = {
+            papyrus = 4,
+            purplegem = 1,
+            petals = 10,
+        },
+        tech = TECH.NONE,
+        isOriginalItem = false,
+        isShown = true,
+        filters = { 'KISAKI_CHARACTER' }
+    },
     -- 以太
     {
         recipe_name = 'kisaki_purplegem_to_ether',

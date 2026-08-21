@@ -179,6 +179,63 @@ local actions = {
         },
     },
     {
+        id = "KISAKIPACK", -- 打包纸打包
+        str = STRINGS.KISAKI_ACTION.KISAKIPACK,
+        fn = function(act)
+            local target = act.target
+            local pack = act.invobject
+            if target == nil or pack == nil or pack.prefab ~= "kisaki_pack" then
+                return false
+            end
+            local x, y, z = target.Transform:GetWorldPosition()
+
+            local gift = SpawnPrefab("kisaki_gift")
+            if gift == nil then
+                return false
+            end
+            if not gift.components.kisaki_packer:Pack(target, act.doer) then
+                gift:Remove()
+                return false
+            end
+
+            gift.Transform:SetPosition(x, y, z)
+            if pack.components.stackable then
+                pack.components.stackable:Get(1):Remove()
+            else
+                pack:Remove()
+            end
+            if act.doer and act.doer.SoundEmitter then
+                act.doer.SoundEmitter:PlaySound("dontstarve/common/staff_dissassemble")
+            end
+            return true
+        end,
+        state = "doshortaction",
+        actiondata = {
+            priority = 2,
+            mount_valid = true,
+        },
+    },
+    {
+        id = "KISAKIUNPACK", -- 礼物解包
+        str = STRINGS.KISAKI_ACTION.KISAKIUNPACK,
+        fn = function(act)
+            local gift = act.target or act.invobject
+            if gift and gift.prefab == "kisaki_gift" and gift.components.kisaki_packer then
+                if gift.components.kisaki_packer:Unpack(gift:GetPosition()) then
+                    gift:Remove()
+                    return true
+                end
+            end
+            return false
+        end,
+        state = "doshortaction",
+        actiondata = {
+            priority = 2,
+            rmb = true,
+            mount_valid = true,
+        },
+    },
+    {
         id = "KISAKIRUMMAGE", -- 自己写的打开容器动作
         str = STRINGS.KISAKI_ACTION.KISAKIRUMMAGE,
         fn = ACTIONS.RUMMAGE.fn,
@@ -208,6 +265,18 @@ local component_actions = {
                     return inst and inst:HasTag("kisaki_amulet") and inst:HasTag("switchable") and
                         inst.replica.equippable ~= nil and inst.replica.equippable:IsEquipped() and
                         not inst:HasTag("usesdepleted")
+                end,
+            },
+        },
+    },
+    {
+        type = "SCENE",
+        component = "inventoryitem",
+        data = {
+            {
+                action = "KISAKIUNPACK", -- 右键拆包
+                checkfn = function(inst, doer, actionlist, right)
+                    return right and inst and inst:HasTag("kisaki_gift")
                 end,
             },
         },
@@ -289,6 +358,12 @@ local component_actions = {
                 -- inst这里是物品A，doer是动作执行者，这里是一般为玩家，target动作执行对象，actionlist可触发的动作列表。right=true，是否是右键动作
                 checkfn = function(inst, doer, target, actionlist, right)
                     return inst and target and inst.prefab == "kisaki_yog_key"
+                end,
+            },
+            {
+                action = "KISAKIPACK", -- 使用打包纸
+                checkfn = function(inst, doer, target, actionlist, right)
+                    return inst and target and inst.prefab == "kisaki_pack" and not target:HasTag("player")
                 end,
             },
         },

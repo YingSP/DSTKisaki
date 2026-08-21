@@ -10,6 +10,7 @@ local collect_all_item_scope = TUNING.KISAKI_COLLECT_ALL_ITEM_SCOPE
 AddReplicableComponent("kisaki_magic")       -- 角色魔法值通信
 AddReplicableComponent("kisaki_level")       -- 角色等级经验通信
 AddReplicableComponent("kisaki_achievement") -- 角色成就信息通信
+AddReplicableComponent("kisaki_packer")      -- 打包礼物放置预览通信
 
 ----------------------------------------------------------------------------预制物修改--------------------------------------------------------------------------
 
