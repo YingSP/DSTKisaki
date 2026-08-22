@@ -103,6 +103,9 @@ STRINGS.KISAKI_ACTION = {
     SLOWESTCD = "240S/次",
 }
 
+-- 万能工具远程种植使用原版 CASTSPELL 动作，补充其右键动作文本。
+STRINGS.ACTIONS.CASTSPELL.KISAKISTARPLANT = "种植"
+
 --------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 STRINGS.UI.CRAFTING_FILTERS.KISAKI_TALISMAN = "妃的守护命符"
@@ -244,9 +247,14 @@ local MSG = {
         recipe_desc = "诸界之扉的银白钥匙，通晓万物归一者。"
     },
     kisaki_pack = {
-        name = "封神笔",
+        name = "浮生绘羽",
         desc = "世间万物，都将在他笔下复现",
         recipe_desc = "世间万物，都将在他笔下复现"
+    },
+    kisaki_star_tool = {
+        name = "贝雅特丽齐之引",
+        desc = "星辉为引，渡人穿越九重天穹。",
+        recipe_desc = "星辉为引，渡人穿越九重天穹。"
     },
     kisaki_shadow_protector_gemini = {
         name = "暗影守护者",

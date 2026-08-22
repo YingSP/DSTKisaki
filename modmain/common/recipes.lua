@@ -79,6 +79,7 @@ local recipe_images = {
     kisaki_magic = { atlas = "images/inventoryimages/widget/kisaki_magic.xml", image = "kisaki_magic.tex" },
     kisaki_ether = { atlas = "images/inventoryimages/prefabs/kisaki_ether.xml", image = "kisaki_ether.tex" },
     kisaki_pack = { atlas = "images/inventoryimages/prefabs/kisaki_pack.xml", image = "kisaki_pack.tex" },
+    kisaki_star_tool = { atlas = "images/inventoryimages/prefabs/kisaki_star_tool.xml", image = "kisaki_star_tool.tex" },
     kisaki_talisman_aquarius = { atlas = "images/inventoryimages/prefabs/kisaki_constellation_talismans.xml", image = "kisaki_talisman_aquarius.tex" },
     kisaki_talisman_pisces = { atlas = "images/inventoryimages/prefabs/kisaki_constellation_talismans.xml", image = "kisaki_talisman_pisces.tex" },
     kisaki_talisman_aries = { atlas = "images/inventoryimages/prefabs/kisaki_constellation_talismans.xml", image = "kisaki_talisman_aries.tex" },
@@ -95,7 +96,21 @@ local recipe_images = {
 }
 
 local recipe_all = {
-    -- 封神笔
+    -- 贝雅特丽齐之引
+    {
+        recipe_name = 'kisaki_star_tool',
+        ingredients_data = {
+            twigs = 30,
+            goldnugget = 20,
+            kisaki_magic = 500,
+            silk = 5,
+        },
+        tech = TECH.NONE,
+        isOriginalItem = false,
+        isShown = true,
+        filters = { 'KISAKI_CHARACTER' }
+    },
+    -- 浮生绘羽
     {
         recipe_name = 'kisaki_pack',
         config = {
@@ -104,7 +119,7 @@ local recipe_all = {
         ingredients_data = {
             papyrus = 4,
             purplegem = 1,
-            petals = 10,
+            feather_crow = 4,
         },
         tech = TECH.NONE,
         isOriginalItem = false,

@@ -141,6 +141,7 @@ end
 -- 踏水时只保留地面碰撞：可经过障碍物、角色及巨型生物，同时仍保留地面物理判定。
 local function SetCancerWaterWalkPhysics(owner)
     if owner and owner.Physics then
+        --修改目标的碰撞属性
         owner.Physics:ClearCollisionMask()
         owner.Physics:CollidesWith(COLLISION.GROUND)
         owner.Physics:Teleport(owner.Transform:GetWorldPosition())
@@ -161,7 +162,7 @@ local function RestoreCancerPhysics(owner)
 end
 
 local function CancerEquip(inst, owner)
-    if not (owner and owner:IsValid() and not owner:HasTag("playerghost")) or owner.kisaki_cancer_blocksink then
+    if not (owner and owner:IsValid() or owner:HasTag("playerghost")) or owner.kisaki_cancer_blocksink then
         return
     end
 
@@ -176,14 +177,14 @@ local function CancerEquip(inst, owner)
         if not owner:IsValid() or owner:HasTag("playerghost") then
             return
         end
-        if owner.components.drownable then
+        if owner.components.drownable and owner.components.drownable.enabled then
             owner.components.drownable.enabled = false
             -- 部分动作会重设碰撞层，定时重设以确保踏水期间始终可无视实体碰撞。
             SetCancerWaterWalkPhysics(owner)
-            if owner.components.drownable:IsOverWater() and owner.sg and
-                (owner.sg:HasStateTag("moving") or owner.sg:HasStateTag("running")) then
-                SpawnPrefab("weregoose_splash_less" .. tostring(math.random(2))).entity:SetParent(owner.entity)
-            end
+        end
+        if owner.components.drownable:IsOverWater() and owner.sg and
+            (owner.sg:HasStateTag("moving") or owner.sg:HasStateTag("running")) then
+            SpawnPrefab("weregoose_splash_less" .. tostring(math.random(2))).entity:SetParent(owner.entity)
         end
     end)
 end
