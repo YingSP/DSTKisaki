@@ -24,3 +24,12 @@ Assets = {
 
 -- 注册地图图标(还需要在prefeb引用)
 AddMinimapAtlas("images/map_icons/" .. avatar_name .. ".xml")
+
+local widgets = {
+    "kisaki_magic",
+    "kisaki_character",
+}
+for key, value in pairs(widgets) do
+    table.insert(Assets, Asset("IMAGE", "images/inventoryimages/widget/" .. value .. ".tex"))
+    table.insert(Assets, Asset("ATLAS", "images/inventoryimages/widget/" .. value .. ".xml"))
+end

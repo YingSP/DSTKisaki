@@ -3,62 +3,9 @@ local log = require("utils/kisakilogger")
 
 ----------------------------------------------------------------------------组件通信----------------------------------------------------------------------------
 
-AddReplicableComponent("kisaki_magic") -- 角色魔法值通信
-AddReplicableComponent("kisaki_level") -- 角色等级经验通信
-AddReplicableComponent("kisaki_achievement") -- 角色成就通信
-
-------------------------------------------------------------------------角色换人信息保存-------------------------------------------------------------------------
-
--- 世界预制物添加监听，用于实现角色等级等信息保存
-local function Onplayerdespawnanddelete(world, data)
-    local player = data.player or data
-    if player:HasTag("kisaki") then
-        local saveinfo = {}
-        for k, v in pairs(player.components) do
-            if v.OnPlayerSave then
-                saveinfo[k] = v:OnPlayerSave()
-            end
-        end
-        log.info("检测到角色消失，将角色数据存储进世界数据，当前玩家为：" .. player.userid)
-        TheWorld.components.kisaki_info_save:SetSaveInfo(player.userid, saveinfo)
-    end
-end
--- 角色保存的东西集中写在这，组件内只实现保存方法
-AddPrefabPostInit("world", function(inst)
-    if inst.ismastersim then
-        -- 给服务器世界添加一个组件用于存储信息
-        inst:AddComponent("kisaki_info_save")
-        -- 角色退出世界时存储信息
-        inst:ListenForEvent("ms_playerdespawn", Onplayerdespawnanddelete)
-        inst:ListenForEvent("ms_playerdespawnandmigrate", Onplayerdespawnanddelete)
-        inst:ListenForEvent("ms_playerdespawnanddelete", Onplayerdespawnanddelete)
-    end
-end)
--- 角色数据读取
-AddPrefabPostInit("kisaki", function(inst)
-    if TheWorld.ismastersim then
-        local oldOnSoraSpawn = inst.OnNewSpawn
-        inst.OnNewSpawn = function(player)
-            if TheWorld.components.kisaki_info_save and TUNING.KISAKI_DATA_SAVE then
-                log.info("检测到玩家出生，从世界数据中读取之前存储的角色数据，当前玩家为：" .. player.userid)
-                local saveinfo = TheWorld.components.kisaki_info_save:GetSaveInfo(player.userid)
-                if saveinfo then
-                    log.debug("从世界组件中拿到了当前玩家的数据")
-                    for k, v in pairs(saveinfo) do
-                        if player.components[k] and player.components[k].OnPlayerLoad then
-                            player.components[k]:OnPlayerLoad(v)
-                        end
-                    end
-                else
-                    log.info("当前玩家为首次进入世界，数据设为默认值")
-                end
-            end
-            if oldOnSoraSpawn then
-                return oldOnSoraSpawn(player)
-            end
-        end
-    end
-end)
+AddReplicableComponent("kisaki_magic")       -- 角色魔法值通信
+AddReplicableComponent("kisaki_level")       -- 角色等级经验通信
+AddReplicableComponent("kisaki_achievement") -- 角色成就信息通信
 
 ----------------------------------------------------------------------------预制物修改--------------------------------------------------------------------------
 
@@ -112,4 +59,121 @@ AddComponentPostInit("stewer", function(Stewer)
             log.error("原版收获烹饪锅的方法丢失，请排查！")
         end
     end
+end)
+
+-- 将魔法值加入到制作配方中
+CHARACTER_INGREDIENT.KISAKI_MAGIC = "kisaki_magic"
+-- 判断是否是角色属性的方法
+local oldIsCharacterIngredient = _G.IsCharacterIngredient
+if oldIsCharacterIngredient then
+    _G.IsCharacterIngredient = function(ingredienttype)
+        if ingredienttype == "kisaki_magic" then
+            return true
+        end
+        return oldIsCharacterIngredient(ingredienttype)
+    end
+end
+-- 修改服务器制作组件
+AddComponentPostInit("builder", function(self)
+    if not self.inst:HasTag("kisaki") then
+        return -1
+    end
+    -- 判断是否存在该角色属性可以作为制作配方
+    local oldHasCharacterIngredient = self.HasCharacterIngredient
+    self.HasCharacterIngredient = function(s, ingredient, ...)
+        if ingredient.type == CHARACTER_INGREDIENT.KISAKI_MAGIC then
+            if self.inst.components.kisaki_magic ~= nil then
+                return (self.freebuildmode and 0) or
+                    math.ceil(self.inst.components.kisaki_magic.current) >= ingredient.amount,
+                    self.inst.components.kisaki_magic.current
+            end
+        end
+        return oldHasCharacterIngredient(s, ingredient, ...)
+    end
+    -- 制作时消耗人物属性
+    local oldRemoveIngredients = self.RemoveIngredients
+    self.RemoveIngredients = function(s, ingredients, recname)
+        local recipe = AllRecipes[recname]
+        if recipe then
+            for _, v in pairs(recipe.character_ingredients) do
+                if v.type == CHARACTER_INGREDIENT.KISAKI_MAGIC then
+                    local current = math.ceil(self.inst.components.kisaki_magic.current)
+                    if current >= v.amount and not self.freebuildmode then
+                        self.inst.components.kisaki_magic:DoDelta(-v.amount)
+                    end
+                end
+            end
+        end
+        return oldRemoveIngredients(s, ingredients, recname)
+    end
+end)
+-- 同步修改客户端制作组件
+AddClassPostConstruct("components/builder_replica", function(self)
+    if not self.inst:HasTag("kisaki") then
+        return -1
+    end
+    -- 制作解锁
+    local oldHasCharacterIngredient = self.HasCharacterIngredient
+    self.HasCharacterIngredient = function(s, ingredient, ...)
+        if self.inst.replica.kisaki_magic.current ~= nil then
+            local current = math.ceil(self.inst.replica.kisaki_magic.current:value())
+            return (self.classified.isfreebuildmode:value() and 0) or current >= ingredient.amount, current
+        end
+        return oldHasCharacterIngredient(self, ingredient, ...)
+    end
+end)
+
+------------------------------------------------------------------------世界组件修改-------------------------------------------------------------------------
+
+-- 世界预制物添加监听，用于实现角色等级等信息保存
+local function Onplayerdespawnanddelete(world, data)
+    local player = data.player or data
+    if player:HasTag("kisaki") then
+        local saveinfo = {}
+        for k, v in pairs(player.components) do
+            if v.OnPlayerSave then
+                saveinfo[k] = v:OnPlayerSave()
+            end
+        end
+        log.info("检测到角色消失，将角色数据存储进世界数据，当前玩家为：" .. player.userid)
+        TheWorld.components.kisaki_info_save:SetSaveInfo(player.userid, saveinfo)
+    end
+end
+-- 角色数据读取
+AddPrefabPostInit("kisaki", function(inst)
+    if TheWorld.ismastersim then
+        local oldOnKisakiSpawn = inst.OnNewSpawn
+        inst.OnNewSpawn = function(player)
+            if TheWorld.components.kisaki_info_save and TUNING.KISAKI_DATA_SAVE then
+                log.info("检测到玩家出生，从世界数据中读取之前存储的角色数据，当前玩家为：" .. player.userid)
+                local saveinfo = TheWorld.components.kisaki_info_save:GetSaveInfo(player.userid)
+                if saveinfo then
+                    log.debug("从世界组件中拿到了当前玩家的数据")
+                    for k, v in pairs(saveinfo) do
+                        if player.components[k] and player.components[k].OnPlayerLoad then
+                            player.components[k]:OnPlayerLoad(v)
+                        end
+                    end
+                else
+                    log.info("当前玩家为首次进入世界，数据设为默认值")
+                end
+            end
+            if oldOnKisakiSpawn then
+                return oldOnKisakiSpawn(player)
+            end
+        end
+    end
+end)
+
+
+AddPrefabPostInit("world", function(inst)
+    if not TheWorld.ismastersim then
+        return
+    end
+    -- 给服务器世界添加一个组件用于存储信息
+    inst:AddComponent("kisaki_info_save")
+    -- 角色退出世界时存储信息
+    inst:ListenForEvent("ms_playerdespawn", Onplayerdespawnanddelete)
+    inst:ListenForEvent("ms_playerdespawnandmigrate", Onplayerdespawnanddelete)
+    inst:ListenForEvent("ms_playerdespawnanddelete", Onplayerdespawnanddelete)
 end)

@@ -61,6 +61,9 @@ STRINGS.CHARACTERS.KISAKI = {
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+STRINGS.UI.CRAFTING_FILTERS.KISAKI_CHARACTER = "妃的魔法道具"
+
+STRINGS.UI.CRAFTING.NEEDSTECH.KISAKI = "月社妃知道如何制作"
 -- 模组物品被原版交互后语句添加
 local MSG = {
     kisaki = {
@@ -68,7 +71,25 @@ local MSG = {
         desc = '多么坚强的少女',
         kisaki_desc = '另一个我？',
         recipe_desc = '月社妃'
-    }
+    },
+    kisaki_ether = {
+        name = "以太",
+        desc = "世界的基础能量，听说所有的物品都基于此生成",
+        recipe_desc = "从宝石中提取能量"
+    },
+    kisaki_purplegem_to_ether = {
+        name = "以太",
+        recipe_desc = "从宝石中提取能量"
+    },
+    kisaki_goldnugget_to_ether = {
+        name = "以太",
+        recipe_desc = "使用魔力从万物中提取本源"
+    },
+    kisaki_ether_bottle = {
+        name = "以太球",
+        desc = "能量的集合体，好像有些特殊的作用",
+        recipe_desc = "有些东西装进容器里才能用"
+    },
 }
 
 for k, v in pairs(MSG) do

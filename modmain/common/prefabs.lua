@@ -1,3 +1,5 @@
 PrefabFiles = {
-    "kisaki"
+    "kisaki",
+    "kisaki_items",
+    "kisaki_projectiles",
 }

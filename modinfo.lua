@@ -119,6 +119,16 @@ configuration_options =
 		default = true,
 		hover = "角色等级/成就/技能树数据存储"
 	},
+	{
+		name = "mod_recipes_share",
+		label = "模组通用物品制作共享",
+		options = {
+			{ description = "关闭", data = false, hover = "所有人都可以制作月社妃通用道具" },
+			{ description = "开启", data = true, hover = "只有月社妃可以制作模组相关内容" },
+		},
+		default = true,
+		hover = "角色配方共享"
+	},
 	makeTitle("角色基础属性设置"),
 	{
 		name = "init_health",
