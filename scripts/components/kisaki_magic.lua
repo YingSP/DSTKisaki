@@ -103,7 +103,6 @@ local function Heal(self, inst)
     end
 
     -- 周围有玩家时，快速恢复魔法值
-    local x, y, z = inst.Transform:GetWorldPosition()
     local players = TheSim:FindEntities(x, y, z, PLAYER_RANGE, { "player" })
     if #players > 1 then
         if PLAYER_ADD_SPEED > 0 then

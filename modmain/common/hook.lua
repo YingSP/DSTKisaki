@@ -5,6 +5,7 @@ local log = require("utils/kisakilogger")
 
 AddReplicableComponent("kisaki_magic") -- 角色魔法值通信
 AddReplicableComponent("kisaki_level") -- 角色等级经验通信
+AddReplicableComponent("kisaki_achievement") -- 角色成就通信
 
 ------------------------------------------------------------------------角色换人信息保存-------------------------------------------------------------------------
 
@@ -82,21 +83,25 @@ AddPrefabPostInit("merm", function(inst)
 end)
 
 -- 天体英雄加tag，实现免疫启蒙光环
-local function ttyx_add_tag(inst)
-    inst:AddTag("kisaki_alterguardian_phase")
-end
+local lunacy_sanityaura_prefabs = {
+    "alterguardian_phase1",
+    "alterguardian_phase2",
+    "alterguardian_phase3",
+}
 if TheNet:GetIsServer() and TUNING.KISAKI_IMMUNITY_AURA_ENABLE then
-    AddPrefabPostInit("alterguardian_phase1", ttyx_add_tag)
-    AddPrefabPostInit("alterguardian_phase2", ttyx_add_tag)
-    AddPrefabPostInit("alterguardian_phase3", ttyx_add_tag)
+    for i, prefabname in ipairs(lunacy_sanityaura_prefabs) do
+        AddPrefabPostInit(prefabname, function(inst)
+            inst:AddTag("kisaki_alterguardian_phase")
+        end)
+    end
 end
 
 ----------------------------------------------------------------------------组件修改-----------------------------------------------------------------------------
 
---修改烹饪组件,让收获锅推送一个事件，用于记录角色经验，实现多倍采集
-AddComponentPostInit("stewer", function(stewer)
-    local oldHarvest = stewer.Harvest
-    stewer.Harvest = function(self, harvester)
+-- 修改烹饪组件,让收获锅推送一个事件，用于记录角色经验，实现多倍采集
+AddComponentPostInit("stewer", function(Stewer)
+    local oldHarvest = Stewer.Harvest
+    function Stewer:Harvest(harvester, ...)
         -- 已经制作完且有角色拿时，往该角色推一个事件
         if self.done and harvester ~= nil and self.product and harvester:HasTag("kisaki") then
             harvester:PushEvent("kisaki_cook", { product = self.product, prefab = self.inst.prefab })

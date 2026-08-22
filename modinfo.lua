@@ -14,8 +14,8 @@ api_version = 10
 -- 所有客户端需要下载此MOD（服务器MOD）
 -- client_only_mode = true(客户端MOD)。all_clients_require_mod = true(纯服务器MOD)
 all_clients_require_mod = true
--- mod加载优先级，越大越先加载，需要做mod适配可以填小点
-priority = -2100000000
+-- mod加载优先级，越大越后加载
+priority = -10000
 -- 是否兼容联机版
 dst_compatible = true
 -- 不兼容单机原版
@@ -31,6 +31,11 @@ forumthread = ""
 -- mod_dependencies = {{
 -- 	workshop = ""
 -- }}
+
+-- 修改模组名字方便本地区别线上
+if folder_name and folder_name == "DSTKisaki" then
+	name = name .. "-本地测试"
+end
 
 -- mod图标(显示在列表内的图片)，xml会自己定位到对应的图片文件
 icon_atlas = "images/modicon.xml"
@@ -289,7 +294,7 @@ configuration_options =
 			{ description = "否", data = false, hover = "角色初始不带科技一本" },
 			{ description = "是", data = true, hover = "角色初始自带科技一本" }
 		},
-		default = true,
+		default = false,
 		hover = "月社妃是否初始自带科技一本"
 	},
 	{
@@ -427,11 +432,11 @@ configuration_options =
 		name = "developer_log_level",
 		label = "日志级别",
 		options = {
-			{ description = "DEBUG", data = 1, hover = "DEBUG" },
-			{ description = "INFO", data = 2, hover = "INFO" },
+			{ description = "DEBUG",   data = 1, hover = "DEBUG" },
+			{ description = "INFO",    data = 2, hover = "INFO" },
 			{ description = "DECLARE", data = 3, hover = "DECLARE" },
-			{ description = "WARN", data = 4, hover = "WARN" },
-			{ description = "ERROR", data = 5, hover = "ERROR" },
+			{ description = "WARN",    data = 4, hover = "WARN" },
+			{ description = "ERROR",   data = 5, hover = "ERROR" },
 		},
 		default = 5,
 		hover = "别动！除非你想让你的服务器变卡！"

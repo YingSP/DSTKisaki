@@ -74,6 +74,22 @@ GLOBAL.k_hunger_info = function()
     end
 end
 
+-- 获取当前玩家的移动组件信息
+GLOBAL.k_locomotor_info = function()
+    if TheNet:GetIsServer() then
+        local player = ConsoleCommandPlayer()
+        if player and player.components and player.components.locomotor then
+            local locomotor = player.components.locomotor
+            local format = "======================================================================================\r\n"
+            format = format .. "当前玩家：%s\r\n"
+            format = format .. "移速状态（奔跑速度/行走速度）：%2.2f/%2.2f\r\n"
+            format = format .. "======================================================================================"
+            local info = string.format(format, player.name, locomotor:GetRunSpeed(), locomotor:GetWalkSpeed())
+            SendModRPCToClient(CLIENT_MOD_RPC["kisaki"]["client_declare"], player.userid, info)
+        end
+    end
+end
+
 -- 获取当前玩家的魔法组件信息
 GLOBAL.k_magic_info = function()
     if TheNet:GetIsServer() then
@@ -91,6 +107,36 @@ GLOBAL.k_level_info = function()
         local player = ConsoleCommandPlayer()
         if player and player.components and player.components.kisaki_level then
             local info = player.components.kisaki_level:GetDebugString()
+            SendModRPCToClient(CLIENT_MOD_RPC["kisaki"]["client_declare"], player.userid, info)
+        end
+    end
+end
+
+-- 获取当前玩家的成就组件信息
+GLOBAL.k_achievement_info = function()
+    if TheNet:GetIsServer() then
+        local player = ConsoleCommandPlayer()
+        if player and player.components and player.components.kisaki_achievement then
+            local info = player.components.kisaki_achievement:GetDebugString()
+            SendModRPCToClient(CLIENT_MOD_RPC["kisaki"]["client_declare"], player.userid, info)
+        end
+    end
+end
+
+---------------------------------------------------------------------世界信息获取--------------------------------------------------------------------------------
+
+-- 获取当前世界开启的所有服务器模组
+GLOBAL.k_modlist = function()
+    if TheNet:GetIsServer() then
+        local player = ConsoleCommandPlayer()
+        local modlist = KISAKI_API.ModList()
+        if player and modlist then
+            local info = "======================================================================================\r\n"
+            info = info .. "开启服务器开启模组如下：\r\n"
+            for dir, name in pairs(modlist) do
+                info = info .. name .. "\r\n"
+            end
+            info = info .. "======================================================================================"
             SendModRPCToClient(CLIENT_MOD_RPC["kisaki"]["client_declare"], player.userid, info)
         end
     end

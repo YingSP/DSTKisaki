@@ -1,32 +1,33 @@
 local modname = "kisaki"
 local string_format = "[%s] [%s] %s"
+local loglevel = TUNING.KISAKI_LOGLEVEL
 
 local function debug(str)
-    if TUNING.KISAKI_LOGLEVEL <= 1 then
+    if loglevel <= 1 then
         print(string.format(string_format, "DEBUG", modname, str))
     end
 end
 
 local function info(str)
-    if TUNING.KISAKI_LOGLEVEL <= 2 then
+    if loglevel <= 2 then
         print(string.format(string_format, "INFO", modname, str))
     end
 end
 
 local function warn(str)
-    if TUNING.KISAKI_LOGLEVEL <= 4 then
+    if loglevel <= 4 then
         print(string.format(string_format, "WARN", modname, str))
     end
 end
 
 local function error(str)
-    if TUNING.KISAKI_LOGLEVEL <= 5 then
+    if loglevel <= 5 then
         print(string.format(string_format, "ERROR", modname, str))
     end
 end
 
 local function declare(str, userid)
-    if TUNING.KISAKI_LOGLEVEL <= 3 then
+    if loglevel <= 3 then
         if TheNet:GetIsServer() and userid then
             SendModRPCToClient(CLIENT_MOD_RPC["kisaki"]["client_declare"], userid, str)
         else

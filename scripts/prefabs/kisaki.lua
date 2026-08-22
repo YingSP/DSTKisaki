@@ -51,8 +51,9 @@ end
 -- 角色免疫启蒙光环
 local function KisakiLunacyImmunityInit(inst)
     if TUNING.KISAKI_IMMUNITY_AURA_ENABLE then
-        inst.components.sanity.sanity_aura_immunities = TUNING
-            .KISAKI_IMMUNITY_AURA_TAG -- 定制光环抵抗，加入特定TAG抵抗特定光环
+        inst.components.sanity:AddSanityAuraImmunity("brightmare")                 -- 虚影
+        inst.components.sanity:AddSanityAuraImmunity("kisaki_alterguardian_phase") -- 天体英雄
+        inst.components.sanity:AddSanityAuraImmunity("repairable_moon_altar")      -- 天体裂隙
     end
 end
 
@@ -207,12 +208,13 @@ end
 -- 刷新角色移速
 local function refreshKisakiSpeed(inst)
     if inst.components.locomotor then
+        -- easing.inSine使用，参数1：已经过时间/当前进度值；参数2：起始值；参数3：变化量，参数4：总时间/最大进度值
         local kisaki_speed = inst:HasTag('playerghost')
             and
             (TUNING.KISAKI_GOST_FAST and TUNING.KISAKI_GOST_MOVE_SPEED or TUNING.KISAKI_MOVE_SPEED)
             or
             (TUNING.KISAKI_HEALTH_PUNISHMENT and
-                TUNING.KISAKI_MOVE_SPEED * easing.inSine(inst.components.health:GetPercent(), 0.5, 1, 1) or
+                TUNING.KISAKI_MOVE_SPEED * easing.outSine(inst.components.health:GetPercent(), 0.5, 0.5, 1) or
                 TUNING.KISAKI_MOVE_SPEED)
         inst.components.locomotor:SetExternalSpeedMultiplier(inst, "kisaki", kisaki_speed)
         -- inst.components.talker:Say("我的速度调整了，当前为" .. kisaki_speed)
@@ -338,7 +340,6 @@ local master_postinit = function(inst)
     KisakiNeverMonkey(inst)       -- 角色抵抗诅咒饰品，不设开关
     KisakiSanityaura(inst)        -- 角色拥有一个每分钟回5点的回san光环（加了个原版怪物才有的组件）
     KisakiDeathNoDrop(inst)       -- 死亡不掉落
-    KisakiFastBuild(inst)         -- 角色快速制作，TODO，后面丢技能树去
 
     -- 监听各种事件
     inst:ListenForEvent("ms_respawnedfromghost", onbecamehuman)            -- 监听角色复活
@@ -348,8 +349,9 @@ local master_postinit = function(inst)
     inst:DoPeriodicTask(0.3, function() refreshKisakiCourage(inst) end, 1) -- 每0.3s监听下角色的san值变动
 
     -- 角色特殊内容
-    inst:AddComponent("kisaki_magic") -- 角色魔法值
-    inst:AddComponent("kisaki_level") -- 角色等级
+    inst:AddComponent("kisaki_magic")       -- 角色魔法值
+    inst:AddComponent("kisaki_level")       -- 角色等级
+    inst:AddComponent("kisaki_achievement") -- 角色成就
 
     -- 角色上下洞穴，结束游戏后重新进入游戏
     inst.OnLoad = OnKisakiLoad

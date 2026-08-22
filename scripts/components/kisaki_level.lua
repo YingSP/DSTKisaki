@@ -431,14 +431,25 @@ local function onKisakiLevelUp(inst)
         if health_percent <= 0 then
             return
         end
-        -- 设置三维上限
-        inst.components.health:SetMaxHealth(TUNING.KISAKI_HEALTH + level * TUNING.KISAKI_HEALTH_UP)
-        inst.components.hunger:SetMax(TUNING.KISAKI_HUNGER + level * TUNING.KISAKI_HUNGER_UP)
-        inst.components.sanity:SetMax(TUNING.KISAKI_SANITY + level * TUNING.KISAKI_SANITY_UP)
+        -- 设置三维上限,掉等级就不重新设置上限了，和部分加三维的模组会有冲突
+        local theoreticalmaxhealth = TUNING.KISAKI_HEALTH + level * TUNING.KISAKI_HEALTH_UP
+        if inst.components.health.maxhealth < theoreticalmaxhealth then
+            inst.components.health:SetMaxHealth(theoreticalmaxhealth)
+        end
+        local theoreticalmaxhunger = TUNING.KISAKI_HUNGER + level * TUNING.KISAKI_HUNGER_UP
+        if inst.components.hunger.max < theoreticalmaxhunger then
+            inst.components.hunger:SetMax(theoreticalmaxhunger)
+        end
+        local theoreticalmaxsanity = TUNING.KISAKI_SANITY + level * TUNING.KISAKI_SANITY_UP
+        if inst.components.sanity.max < theoreticalmaxsanity then
+            inst.components.sanity:SetMax(TUNING.KISAKI_SANITY + level * TUNING.KISAKI_SANITY_UP)
+        end
         -- 设置三维百分比
         inst.components.hunger:SetPercent(hunger_percent)
         inst.components.health:SetPercent(health_percent)
         inst.components.sanity:SetPercent(sanity_percent)
+        -- 刷新随从上限
+        inst.components.petleash:SetMaxPetsForPrefab("kisaki_shadow_protector", 1 + math.floor(level / 10))
         -- 防御系数
         inst.components.health.externalabsorbmodifiers:SetModifier(inst,
             TUNING.KISAKI_DAMAGE_REDUCTION_RATE + level * TUNING.KISAKI_DAMAGE_REDUCTION_RATE_UP, "kisaki")

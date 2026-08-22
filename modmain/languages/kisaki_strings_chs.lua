@@ -78,7 +78,7 @@ for k, v in pairs(MSG) do
             STRINGS.CHARACTERS.GENERIC.DESCRIBE[string.upper(k)] = v.desc
         end
         if v.kisaki_desc then
-            STRINGS.CHARACTERS.KISAKI.DESCRIBE[string.upper(k)] = v.kisaki_desc
+            STRINGS.CHARACTERS.KISAKI.DESCRIBE[string.upper(k)] = v.kisaki_desc and v.kisaki_desc or v.desc
         end
         if v.recipe_desc then
             STRINGS.RECIPE_DESC[string.upper(k)] = v.recipe_desc

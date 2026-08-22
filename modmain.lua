@@ -8,26 +8,33 @@ GLOBAL.setmetatable(env, {
 
 -- 导入模组常用方法
 modimport("modmain/utils/api")
+modimport("modmain/utils/globalapi")
 -- 导入皮肤api
 modimport("modmain/utils/skinapi")
 -- 加载角色全局配置
 modimport("modmain/common/tuning")
--- 加载模组动画/声音资源
-modimport("modmain/common/assets")
--- 定义物品制作配方
-modimport("modmain/common/recipes")
--- 模组背包(箱子)定义
-modimport("modmain/common/containers")
+-- 新增科技树
+modimport("modmain/common/techtree")
 -- 加载角色语句
 modimport("modmain/languages/kisaki_strings_chs")
--- 加载模组特效
-modimport("modmain/common/fx")
--- 修改原版组件/预制物逻辑
-modimport("modmain/common/hook")
--- 增加原版通信内容
-modimport("modmain/common/rpc")
 -- 加载模组预制物
 modimport("modmain/common/prefabs")
+-- 加载模组动画/声音资源
+modimport("modmain/common/assets")
+-- 模组背包(箱子)UI定义
+modimport("modmain/common/containers")
+-- 定义模组动作与sg
+modimport("modmain/common/actions")
+modimport("modmain/common/sg")
+-- 修改原版组件/预制物逻辑
+modimport("modmain/common/hook")
+-- 定义物品制作配方与科技树
+modimport("modmain/common/recipes")
+modimport("modmain/common/recipes_copy")
+-- 加载模组特效
+modimport("modmain/common/fx")
+-- 增加原版通信内容
+modimport("modmain/common/rpc")
 -- 加载模组UI
 modimport("modmain/common/ui")
 -- debug命令

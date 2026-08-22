@@ -12,6 +12,13 @@ local RATE_SCALE_ANIM =
     [RATE_SCALE.DECREASE_LOW] = "arrow_loop_decrease",
 }
 
+local function onclick(self, player)
+    local kisaki_magic = player.replica.kisaki_magic
+    if kisaki_magic and self.cd() then
+        TheNet:Say(string.format("我现在拥有%2.2f/%2.2f魔力值", kisaki_magic:GetCurrent(), kisaki_magic:GetMax()), false)
+    end
+end
+
 -- 三维状态继承Badge，普通UI继承Widget
 local KisakiSanityBadge = Class(Badge, function(self, owner)
     -- 调用父类构建方法，
@@ -70,6 +77,9 @@ local KisakiSanityBadge = Class(Badge, function(self, owner)
     -- self.warning:GetAnimState():AnimateWhilePaused(not dont_update_while_paused)
     -- self.warning:Hide()
 
+    -- 点击触发
+    self.cd = KisakiCD(60)
+    self.onclick = onclick
     -- 开始更新
     self:StartUpdating()
 end)

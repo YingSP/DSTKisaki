@@ -38,11 +38,10 @@ TUNING.KISAKI_STRONGGER = GetModConfigData("init_stronggr")                     
 TUNING.KISAKI_HEALTH_PUNISHMENT = GetModConfigData("init_health_punishment")        --  角色掉血惩罚
 TUNING.KISAKI_SANITY_PUNISHMENT = GetModConfigData("init_sanity_punishment")        --  角色低SAN惩罚
 -- 角色技能树内容
-TUNING.KISAKI_FSAT_BUILD = GetModConfigData("init_fast_build")                      --  角色自带快速制作
+TUNING.KISAKI_FSAT_BUILD = GetModConfigData("init_fast_build")   --  角色自带快速制作
 -- 模组开发者配置
-TUNING.KISAKI_LOGLEVEL = GetModConfigData("developer_log_level")                    --  日志打印最低级别
-TUNING.KISAKI_DEBUGER = GetModConfigData("developer_debug_cmd")                     --  模组控制台命令启用
-
+TUNING.KISAKI_LOGLEVEL = GetModConfigData("developer_log_level") --  日志打印最低级别
+TUNING.KISAKI_DEBUGER = GetModConfigData("developer_debug_cmd")  --  模组控制台命令启用
 
 TUNING.KISAKI_CANT_EAT_TAGS = {
 	"stale", "spoiled", "monstermeat"
@@ -55,14 +54,8 @@ TUNING.KISAKI_CANT_EAT_FOOD = {
 } --  spoiled_food腐烂食物,rottenegg腐烂鸟蛋,spoiled_fish变质的鱼，spoiled_fish_small变质小鱼块
 TUNING.CURSELIST = {
 	["cursed_monkey_token"] = true
-}                                 --  会自动删除的诅咒列表
-TUNING.KISAKI_GOST_MOVE_SPEED = 5 --  角色死亡后移速倍率
--- 当预制物有以下tag时，免疫他的光环
-TUNING.KISAKI_IMMUNITY_AURA_TAG = {
-	["brightmare"] = true,              -- 虚影
-	["kisaki_alterguardian_phase"] = true, -- 天体英雄
-	["repairable_moon_altar"] = true    -- 天体裂隙
-}
+}                                   --  会自动删除的诅咒列表
+TUNING.KISAKI_GOST_MOVE_SPEED = 1.8 --  角色死亡后移速倍率
 
 -- 初始物品
 TUNING.KISAKI_STARTING_ITEMS = {
