@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<Atlas>
+	<Texture filename="kisaki_constellation_talismans.tex" />
+	<Elements>
+		<Element name="kisaki_talisman_aquarius.tex" u1="0.000488281" u2="0.0620117" v1="0.0078125" v2="0.992188" />
+		<Element name="kisaki_talisman_capricorn.tex" u1="0.0629883" u2="0.124512" v1="0.0078125" v2="0.992188" />
+		<Element name="kisaki_talisman_aries.tex" u1="0.125488" u2="0.187012" v1="0.0078125" v2="0.992188" />
+		<Element name="kisaki_talisman_cancer.tex" u1="0.187988" u2="0.249512" v1="0.0078125" v2="0.992188" />
+		<Element name="kisaki_talisman_gemini.tex" u1="0.250488" u2="0.312012" v1="0.0078125" v2="0.992188" />
+		<Element name="kisaki_talisman_leo.tex" u1="0.312988" u2="0.374512" v1="0.0078125" v2="0.992188" />
+		<Element name="kisaki_talisman_pisces.tex" u1="0.375488" u2="0.437012" v1="0.0078125" v2="0.992188" />
+		<Element name="kisaki_talisman_taurus.tex" u1="0.437988" u2="0.499512" v1="0.0078125" v2="0.992188" />
+		<Element name="kisaki_talisman_virgo.tex" u1="0.500488" u2="0.562012" v1="0.0078125" v2="0.992188" />
+		<Element name="kisaki_talisman_libra.tex" u1="0.562988" u2="0.624512" v1="0.0078125" v2="0.992188" />
+		<Element name="kisaki_talisman_scorpio.tex" u1="0.625488" u2="0.687012" v1="0.0078125" v2="0.992188" />
+		<Element name="kisaki_talisman_sagittarius.tex" u1="0.687988" u2="0.749512" v1="0.0078125" v2="0.992188" />
+		<Element name="kisaki_talisman_star.tex" u1="0.750488" u2="0.812012" v1="0.0078125" v2="0.992188" />
+	</Elements>
+</Atlas>

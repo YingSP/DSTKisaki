@@ -331,6 +331,8 @@ local master_postinit = function(inst)
     inst.components.combat.hitrange = TUNING.KISAKI_HIT_RANGE    -- 攻击可以打到的范围，默认是2
     -- 角色死亡
     inst.skeleton_prefab = nil                                   -- 角色死亡无骨架，掉落其他物品
+    -- 角色默认的暗影守护者数量
+    inst.components.petleash:SetMaxPetsForPrefab("kisaki_shadow_protector", 1)
 
     -- 特殊能力
     KisakiReadInit(inst)          -- 角色读书能力

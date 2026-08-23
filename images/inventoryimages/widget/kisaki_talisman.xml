@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<Atlas>
+	<Texture filename="kisaki_talisman.tex" />
+	<Elements>
+		<Element name="kisaki_talisman.tex" u1="0.00390625" u2="0.996094" v1="0.00390625" v2="0.996094" />
+	</Elements>
+</Atlas>

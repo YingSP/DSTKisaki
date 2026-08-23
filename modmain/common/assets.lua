@@ -27,6 +27,7 @@ AddMinimapAtlas("images/map_icons/" .. avatar_name .. ".xml")
 
 local widgets = {
     "kisaki_magic",
+    "kisaki_talisman",
     "kisaki_character",
 }
 for key, value in pairs(widgets) do

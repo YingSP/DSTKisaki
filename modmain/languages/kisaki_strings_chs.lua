@@ -61,6 +61,15 @@ STRINGS.CHARACTERS.KISAKI = {
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+STRINGS.KISAKI_ACTION = {
+    OPENORCLOSEAMULETWITHRIGHT = "开关",
+    OPENGEMINIAMULET = "已开启双子守护",
+    CLOSEGEMINIAMULET = "已关闭双子守护",
+}
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+STRINGS.UI.CRAFTING_FILTERS.KISAKI_TALISMAN = "妃的守护命符"
 STRINGS.UI.CRAFTING_FILTERS.KISAKI_CHARACTER = "妃的魔法道具"
 
 STRINGS.UI.CRAFTING.NEEDSTECH.KISAKI = "月社妃知道如何制作"
@@ -89,6 +98,79 @@ local MSG = {
         name = "以太球",
         desc = "能量的集合体，好像有些特殊的作用",
         recipe_desc = "有些东西装进容器里才能用"
+    },
+    kisaki_talisman_aquarius = {
+        name = "星灵守护-水瓶",
+        desc = "关于炼药的知识，它知道更多",
+        recipe_desc = "来自星空的记忆"
+    },
+    kisaki_talisman_pisces = {
+        name = "星灵守护-双鱼",
+        desc = "鱼儿们更喜欢水",
+        recipe_desc = "来自星空的记忆"
+    },
+    kisaki_talisman_aries = {
+        name = "星灵守护-白羊",
+        desc = "治愈亦或是守护",
+        recipe_desc = "来自星空的记忆"
+    },
+    kisaki_talisman_taurus = {
+        name = "星灵守护-金牛",
+        desc = "它身怀巨力，他刀枪不入",
+        recipe_desc = "来自星空的记忆"
+    },
+    kisaki_talisman_gemini = {
+        name = "星灵守护-双子",
+        desc = "召唤你的半身保护你",
+        recipe_desc = "来自星空的记忆"
+    },
+    kisaki_talisman_cancer = {
+        name = "星灵守护-巨蟹",
+        desc = "两栖动物的优势",
+        recipe_desc = "来自星空的记忆"
+    },
+    kisaki_talisman_leo = {
+        name = "星灵守护-狮子",
+        desc = "狮子的力量与眼睛",
+        recipe_desc = "来自星空的记忆"
+    },
+    kisaki_talisman_virgo = {
+        name = "星灵守护-处女",
+        desc = "仙女的织术",
+        recipe_desc = "来自星空的记忆"
+    },
+    kisaki_talisman_libra = {
+        name = "星灵守护-天秤",
+        desc = "人生并非处处公平，不是吗",
+        recipe_desc = "来自星空的记忆"
+    },
+    kisaki_talisman_scorpio = {
+        name = "星灵守护-天蝎",
+        desc = "冷漠的猎手，于黑夜之中",
+        recipe_desc = "来自星空的记忆"
+    },
+    kisaki_talisman_sagittarius = {
+        name = "星灵守护-射手",
+        desc = "集百家射术之长",
+        recipe_desc = "来自星空的记忆"
+    },
+    kisaki_talisman_capricorn = {
+        name = "星灵守护-摩羯",
+        desc = "他拥有水元素的力量",
+        recipe_desc = "来自星空的记忆"
+    },
+    kisaki_talisman_star = {
+        name = "星灵守护-群星",
+        desc = "众星之力",
+        recipe_desc = "来自星空的记忆"
+    },
+    kisaki_shadow_protector_gemini = {
+        name = "暗影守护者",
+        desc = "这是一个倒影，来着另一个维度的我",
+    },
+    kisaki_shadow_protector = {
+        name = "暗影守护者",
+        desc = "使用暗影的力量构建一个守护者",
     },
 }
 

@@ -1,5 +1,7 @@
 local avatar_name = "kisaki"
 local log = require("utils/kisakilogger")
+local SourceModifierList = require("util/sourcemodifierlist")
+local SpDamageUtil = require("components/spdamageutil")
 
 ----------------------------------------------------------------------------组件通信----------------------------------------------------------------------------
 
@@ -61,6 +63,81 @@ AddComponentPostInit("stewer", function(Stewer)
     end
 end)
 
+-- 修改移速组件，原版大力士不减速是通过强壮组件实现的，不能直接拿来用
+AddComponentPostInit("locomotor", function(self)
+    local oldGetSpeedMultiplier = self.GetSpeedMultiplier
+    -- 客户端和服务端用的方法不一样，而且是local的，有点抽象
+    if TheWorld.ismastersim then
+        self.GetSpeedMultiplier = function(self)
+            local player_inventory = self.inst.components.inventory
+            if player_inventory and player_inventory:EquipHasTag("kisaki_stronger")
+                and not (self.inst.components.rider ~= nil and self.inst.components.rider:IsRiding()) then
+                local mult = self:ExternalSpeedMultiplier()
+                if player_inventory.isopen then
+                    for k, v in pairs(self.inst.components.inventory.equipslots) do
+                        if v.components.equippable ~= nil then
+                            local item_speed_mult = v.components.equippable:GetWalkSpeedMult()
+                            mult = mult * math.max(item_speed_mult, 1)
+                        end
+                    end
+                end
+                return mult * (self:TempGroundSpeedMultiplier() or self.groundspeedmultiplier) * self.throttle
+            elseif oldGetSpeedMultiplier then
+                return oldGetSpeedMultiplier(self)
+            end
+        end
+    else
+        self.GetSpeedMultiplier = function(self)
+            local player_inventory = self.inst.replica.inventory
+            if player_inventory and player_inventory:EquipHasTag("kisaki_stronger")
+                and not (self.inst.replica.rider and self.inst.replica.rider:IsRiding()) then
+                local mult = self:ExternalSpeedMultiplier()
+                for k, v in pairs(player_inventory:GetEquips()) do
+                    local inventoryitem = v.replica.inventoryitem
+                    if inventoryitem ~= nil then
+                        local item_speed_mult = inventoryitem:GetWalkSpeedMult()
+                        mult = mult * math.max(item_speed_mult, 1)
+                    end
+                end
+                return mult * (self:TempGroundSpeedMultiplier() or self.groundspeedmultiplier) * self.throttle
+            elseif oldGetSpeedMultiplier then
+                return oldGetSpeedMultiplier(self)
+            end
+        end
+    end
+end)
+
+-- 修改血量组件，实现可加成所有伤害的易伤
+AddComponentPostInit("health", function(Health)
+    Health.kisaki_takedmg_mult = SourceModifierList(Health.inst, 1, SourceModifierList.multiply) -- 易伤乘算
+
+    local oldDoDelta = Health.DoDelta
+    function Health:DoDelta(amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb, ...)
+        if amount < 0 then
+            amount = amount * self.kisaki_takedmg_mult:Get()
+        end
+
+        return oldDoDelta(self, amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb, ...)
+    end
+end)
+
+-- 修改攻击组件，实现独立攻击加成
+-- AddComponentPostInit("combat", function(Combat)
+--     Combat.kisaki_damagetype_mult = SourceModifierList(Combat.inst, 1, SourceModifierList.multiply) -- 加伤乘算
+
+--     local oldCalcDamage = Combat.CalcDamage
+--     function Combat:CalcDamage(target, weapon, multiplier, ...)
+--         local damage, spdamage = oldCalcDamage(self, target, weapon, multiplier, ...)
+--         if damage > 0 then
+--             damage = damage * self.kisaki_damagetype_mult:Get()
+--         end
+--         if spdamage ~= nil then
+--             spdamage = SpDamageUtil.ApplyMult(spdamage, self.kisaki_damagetype_mult:Get())
+--         end
+--         return damage, spdamage
+--     end
+-- end)
+
 -- 将魔法值加入到制作配方中
 CHARACTER_INGREDIENT.KISAKI_MAGIC = "kisaki_magic"
 -- 判断是否是角色属性的方法
@@ -120,6 +197,96 @@ AddClassPostConstruct("components/builder_replica", function(self)
             return (self.classified.isfreebuildmode:value() and 0) or current >= ingredient.amount, current
         end
         return oldHasCharacterIngredient(self, ingredient, ...)
+    end
+end)
+
+----------------------------------------------------------------------------玩家修改-----------------------------------------------------------------------------
+local function KillPet(pet)
+    if pet.components.health:IsInvincible() then
+        --reschedule
+        pet._killtask = pet:DoTaskInTime(.5, KillPet)
+    else
+        pet.components.health:Kill()
+    end
+end
+local function OnSpawnPet(inst, pet)
+    if pet:HasTag("kisaki_shadow_protector") then
+        if (inst.components.health:IsDead() or inst:HasTag("playerghost")) and pet._killtask == nil then
+            pet._killtask = pet:DoTaskInTime(math.random(), KillPet)
+        end
+    elseif inst.kisaki_OnSpawnPet ~= nil then
+        inst:kisaki_OnSpawnPet(pet)
+    end
+end
+local function OnDespawnPet(inst, pet)
+    if pet:HasTag("kisaki_shadow_protector") then
+        if not inst.is_snapshot_user_session and pet.sg ~= nil then
+            pet.sg:GoToState("quickdespawn")
+        else
+            pet:Remove()
+        end
+    elseif inst.kisaki_OnDespawnPet ~= nil then
+        inst:kisaki_OnDespawnPet(pet)
+    end
+end
+
+local function SetOmmateumVision(inst)
+    if inst and inst.components.playervision then
+        inst.components.playervision:ForceNightVision(inst._kisaki_nightvision:value())
+        inst.components.playervision:SetCustomCCTable(inst._kisaki_nightvision:value() and {} or nil)
+    end
+end
+
+AddPlayerPostInit(function(inst)
+    -- 删除生成暗影守护者时的转圈圈特效
+    if inst.components.petleash ~= nil then
+        inst.kisaki_OnSpawnPet = inst.components.petleash.onspawnfn
+        inst.kisaki_OnDespawnPet = inst.components.petleash.ondespawnfn
+    else
+        inst:AddComponent("petleash")
+    end
+    inst.components.petleash:SetOnSpawnFn(OnSpawnPet)
+    inst.components.petleash:SetOnDespawnFn(OnDespawnPet)
+    -- 添加夜视监听
+    inst._kisaki_nightvision = net_bool(inst.GUID, "kisaki_nightvision._enabled", "kisaki_nightvision_enableddirty")
+    inst:ListenForEvent("kisaki_nightvision_enableddirty", SetOmmateumVision)
+    -------------------------------------------------------------------服务器部分修改--------------------------------------------------------------
+    if TheWorld.ismastersim then
+        -- 霸体
+        inst._kisaki_domination = SourceModifierList(inst, false, SourceModifierList.boolean)
+        -- 玩家攻击独立增伤
+        local kisaki_player_combat = inst.components.combat
+        kisaki_player_combat.kisaki_damagetype_mult =
+            SourceModifierList(kisaki_player_combat.inst, 1, SourceModifierList.multiply) -- 加伤乘算
+        local kisaki_oldCalcDamage = kisaki_player_combat.CalcDamage
+        kisaki_player_combat.CalcDamage = function(self, target, weapon, multiplier, ...)
+            local damage, spdamage = kisaki_oldCalcDamage(self, target, weapon, multiplier, ...)
+            if damage > 0 then
+                damage = damage * self.kisaki_damagetype_mult:Get()
+            end
+            if spdamage ~= nil then
+                spdamage = SpDamageUtil.ApplyMult(spdamage, self.kisaki_damagetype_mult:Get())
+            end
+            return damage, spdamage
+        end
+        -- 特殊增伤（只增伤普通伤害）
+        inst.kisaki_remote_damagetype_mult = SourceModifierList(inst, 0, SourceModifierList.additive) -- 远程武器独立增伤加算
+        inst.kisaki_melee_damagetype_mult = SourceModifierList(inst, 0, SourceModifierList.additive)  -- 近战武器独立增伤加算
+        local kisaki_oldCustomdamagemultfn = kisaki_player_combat.customdamagemultfn
+        kisaki_player_combat.customdamagemultfn = function(player, target, weapon, multiplier, mount, ...)
+            local customdamagemult = kisaki_oldCustomdamagemultfn ~= nil and
+                kisaki_oldCustomdamagemultfn(player, target, weapon, multiplier, mount, ...) or 1
+            if customdamagemult <= 0 or weapon == nil or weapon.components.weapon == nil then
+                return customdamagemult
+            end
+            if weapon.components.weapon.attackrange == nil or weapon.components.weapon.attackrange < 5 then
+                return customdamagemult *
+                    (player.kisaki_melee_damagetype_mult ~= nil and math.max(1 + player.kisaki_melee_damagetype_mult:Get(), 0) or 1)
+            else
+                return customdamagemult *
+                    (player.kisaki_remote_damagetype_mult ~= nil and math.max(1 + player.kisaki_remote_damagetype_mult:Get(), 0) or 1)
+            end
+        end
     end
 end)
 
