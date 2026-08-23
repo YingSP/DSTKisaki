@@ -154,6 +154,24 @@ local component_actions = {
         },
     },
     {
+        type = "SCENE",
+        component = "container_proxy",
+        data = {
+            {
+                action = "KISAKIRUMMAGE", -- 打开容器功能
+                checkfn = function(inst, doer, actionlist, right)
+                    if inst:HasTag("kisaki_chest") and
+                        inst.components.container_proxy:CanBeOpened() and
+                        not inst:HasTag("burnt") and
+                        doer.replica.inventory ~= nil
+                        and not (doer.replica.rider ~= nil and doer.replica.rider:IsRiding()) then
+                        return true
+                    end
+                end,
+            },
+        },
+    },
+    {
         type = "USEITEM",
         component = "inventoryitem",
         data = {

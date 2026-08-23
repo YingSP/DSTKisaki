@@ -2376,6 +2376,296 @@ copyChestUI("kisaki_library_box", "kisaki_library_box_chest")
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- 夜莺与黄昏之诗
+containers_params.kisaki_space_chest =
+{
+    widget =
+    {
+        slotpos = {},
+        slotbg = {},
+    },
+    itemtestfn = checkNothing,
+    type = "kisaki_space_chest",
+}
+containers_params.kisaki_space_chest_child = {
+    widget =
+    {
+        slotpos = {},
+        slotbg = {},
+        kisaki_button_position_map = {},
+        animbank = "ui_kisaki_container_space",
+        animbuild = "ui_kisaki_container_space",
+        pos = Vector3(0, 0, 0),
+        side_align_tip = 160,
+        dragkey = "kisaki_space_chest" -- 容器UI拖拽的标识key
+    },
+    type = "kisaki_space_chest_child",
+    usespecificslotsforitems = true,
+}
+
+local items_list = TUNING.KISAKI_SPACE_CHEST_ITEMS
+local items_flag_list = {}
+for i, v in ipairs(items_list) do
+    if v ~= "" then
+        items_flag_list[v] = i
+    end
+end
+
+for group = 0, 5 do
+    for row = 0, 9 do
+        for column = 0, 3 do
+            local x = -790 + group * (4 * 65 + 20) + column * 65
+            local y = 355 - row * 70
+            table.insert(containers_params.kisaki_space_chest_child.widget.slotpos, Vector3(x, y, 0))
+        end
+    end
+end
+for key, value in pairs(items_list) do
+    if value ~= "" then
+        containers_params.kisaki_space_chest_child.widget.slotbg[key] = {
+            atlas = 'images/inventoryimages/widget/kisaki_container_ui.xml',
+            image = 'container_ui_' .. value .. '.tex'
+        }
+    else
+        containers_params.kisaki_space_chest_child.widget.slotbg[key] = {
+            atlas = 'images/inventoryimages/widget/kisaki_container_ui.xml',
+            image = 'container_ui.tex'
+        }
+    end
+end
+local x_1 = 900
+local x_2 = -875
+local y_1 = 220
+local y_2 = 70
+table.insert(containers_params.kisaki_space_chest_child.widget.slotpos, Vector3(x_1, 320, 0))
+table.insert(containers_params.kisaki_space_chest_child.widget.slotpos, Vector3(x_2, 320, 0))
+
+-- 暂停全图收集
+local function pause_world_collect(doer, time)
+    TheWorld.components.kisaki_ents_manager:Stop(time)
+end
+AddModRPCHandler("kisaki", "pause_world_collect", pause_world_collect)
+
+local function pause_eight_minute_btnfn(inst, doer, self)
+    if inst.components.container ~= nil then
+        TheWorld.components.kisaki_ents_manager:Stop(8 * 60)
+    elseif inst.replica.container ~= nil and not inst.kisaki_button_cd then
+        inst.kisaki_button_cd = inst:DoTaskInTime(0.5, endbuttonloading)
+        Networking_Announcement("暂停全图收集八分钟")
+        SendModRPCToServer(GetModRPC("kisaki", "pause_world_collect"), 8 * 60)
+    end
+end
+local function pause_one_minute_btnfn(inst, doer, self)
+    if inst.components.container ~= nil then
+        TheWorld.components.kisaki_ents_manager:Stop(60)
+    elseif inst.replica.container ~= nil and not inst.kisaki_button_cd then
+        inst.kisaki_button_cd = inst:DoTaskInTime(0.5, endbuttonloading)
+        Networking_Announcement("暂停全图收集一分钟")
+        SendModRPCToServer(GetModRPC("kisaki", "pause_world_collect"), 60)
+    end
+end
+local function pause_btnfn(inst, doer, self)
+    if inst.components.container ~= nil then
+        TheWorld.components.kisaki_ents_manager:Stop(-1)
+    elseif inst.replica.container ~= nil and not inst.kisaki_button_cd then
+        inst.kisaki_button_cd = inst:DoTaskInTime(0.5, endbuttonloading)
+        Networking_Announcement("暂停容器全图收集")
+        SendModRPCToServer(GetModRPC("kisaki", "pause_world_collect"), -1)
+    end
+end
+local function continue_btnfn(inst, doer, self)
+    if inst.components.container ~= nil then
+        TheWorld.components.kisaki_ents_manager:Stop(0)
+    elseif inst.replica.container ~= nil and not inst.kisaki_button_cd then
+        inst.kisaki_button_cd = inst:DoTaskInTime(0.5, endbuttonloading)
+        Networking_Announcement("继续容器全图收集")
+        SendModRPCToServer(GetModRPC("kisaki", "pause_world_collect"), 0)
+    end
+end
+
+-- 设置收集频率
+local function control_world_collect(doer, cycle)
+    TheWorld.components.kisaki_ents_manager:Control(cycle)
+end
+AddModRPCHandler("kisaki", "control_world_collect", control_world_collect)
+
+local function fastest_cd_btnfn(inst, doer, self)
+    if inst.components.container ~= nil then
+        TheWorld.components.kisaki_ents_manager:Control(3)
+    elseif inst.replica.container ~= nil and not inst.kisaki_button_cd then
+        inst.kisaki_button_cd = inst:DoTaskInTime(0.5, endbuttonloading)
+        Networking_Announcement("当前收集频率为：每3秒一次")
+        SendModRPCToServer(GetModRPC("kisaki", "control_world_collect"), 3)
+    end
+end
+local function fast_cd_btnfn(inst, doer, self)
+    if inst.components.container ~= nil then
+        TheWorld.components.kisaki_ents_manager:Control(10)
+    elseif inst.replica.container ~= nil and not inst.kisaki_button_cd then
+        inst.kisaki_button_cd = inst:DoTaskInTime(0.5, endbuttonloading)
+        Networking_Announcement("当前收集频率为：每10秒一次")
+        SendModRPCToServer(GetModRPC("kisaki", "control_world_collect"), 10)
+    end
+end
+local function slow_cd_btnfn(inst, doer, self)
+    if inst.components.container ~= nil then
+        TheWorld.components.kisaki_ents_manager:Control(60)
+    elseif inst.replica.container ~= nil and not inst.kisaki_button_cd then
+        inst.kisaki_button_cd = inst:DoTaskInTime(0.5, endbuttonloading)
+        Networking_Announcement("当前收集频率为：每60秒一次")
+        SendModRPCToServer(GetModRPC("kisaki", "control_world_collect"), 60)
+    end
+end
+local function slowest_cd_btnfn(inst, doer, self)
+    if inst.components.container ~= nil then
+        TheWorld.components.kisaki_ents_manager:Control(60 * 4)
+    elseif inst.replica.container ~= nil and not inst.kisaki_button_cd then
+        inst.kisaki_button_cd = inst:DoTaskInTime(0.5, endbuttonloading)
+        Networking_Announcement("当前收集频率为：每4分钟一次")
+        SendModRPCToServer(GetModRPC("kisaki", "control_world_collect"), 60 * 4)
+    end
+end
+
+local function world_collect(doer, inst)
+    TheWorld.components.kisaki_ents_manager:Collect()
+end
+AddModRPCHandler("kisaki", "world_collect", world_collect)
+local function spaceboxcollectbtnfn(inst, doer, self)
+    if inst.components.container ~= nil then
+        TheWorld.components.kisaki_ents_manager:Collect()
+    elseif inst.replica.container ~= nil and not inst.kisaki_button_cd then
+        inst.kisaki_button_cd = inst:DoTaskInTime(0.5, endbuttonloading)
+        SendModRPCToServer(GetModRPC("kisaki", "world_collect"), inst)
+    end
+end
+
+containers_params.kisaki_space_chest_child.widget.kisaki_button_position_map = {
+    -- 控制收集按钮
+    pause_eight_minute = {
+        position = Vector3(x_2, y_1, 0),
+        text = STRINGS.KISAKI_ACTION.PAUSEEIGHTMINUTE,
+        fn = pause_eight_minute_btnfn,
+        validfn = containerDefaultValid,
+    },
+    pause_one_minute = {
+        position = Vector3(x_2, y_1 - y_2, 0),
+        text = STRINGS.KISAKI_ACTION.PAUSEONEMINUTE,
+        fn = pause_one_minute_btnfn,
+        validfn = containerDefaultValid,
+    },
+    pause = {
+        position = Vector3(x_2, y_1 - y_2 * 2, 0),
+        text = STRINGS.KISAKI_ACTION.PAUSE,
+        fn = pause_btnfn,
+        validfn = containerDefaultValid,
+    },
+    continue = {
+        position = Vector3(x_2, y_1 - y_2 * 3, 0),
+        text = STRINGS.KISAKI_ACTION.CONTINUE,
+        fn = continue_btnfn,
+        validfn = containerDefaultValid,
+    },
+    fastest_cd = {
+        position = Vector3(x_2, y_1 - y_2 * 4, 0),
+        text = STRINGS.KISAKI_ACTION.FASTESTCD,
+        fn = fastest_cd_btnfn,
+        validfn = containerDefaultValid,
+    },
+    fast_cd = {
+        position = Vector3(x_2, y_1 - y_2 * 5, 0),
+        text = STRINGS.KISAKI_ACTION.FASTCD,
+        fn = fast_cd_btnfn,
+        validfn = containerDefaultValid,
+    },
+    slow_cd = {
+        position = Vector3(x_2, y_1 - y_2 * 6, 0),
+        text = STRINGS.KISAKI_ACTION.SLOWCD,
+        fn = slow_cd_btnfn,
+        validfn = containerDefaultValid,
+    },
+    slowest_cd = {
+        position = Vector3(x_2, y_1 - y_2 * 7, 0),
+        text = STRINGS.KISAKI_ACTION.SLOWESTCD,
+        fn = slowest_cd_btnfn,
+        validfn = containerDefaultValid,
+    },
+    -- 功能按钮
+    mappingtrade = {
+        position = Vector3(x_1, y_1, 0),
+        text = STRINGS.KISAKI_ACTION.MAPPINGTRADE,
+        fn = magicboxmappingtradebtnfn,
+        validfn = containerDefaultValid,
+    },
+    collection = {
+        position = Vector3(x_1, y_1 - y_2, 0),
+        text = STRINGS.KISAKI_ACTION.COLLECTION,
+        fn = magicboxcollectionbtnfn,
+        validfn = containerDefaultValid,
+    },
+    tidy = {
+        position = Vector3(x_1, y_1 - y_2 * 2, 0),
+        text = STRINGS.KISAKI_ACTION.TIDY,
+        fn = magicboxsortbtnfn,
+        validfn = containerIsNotEmpty,
+    },
+    collect = {
+        position = Vector3(x_1, y_1 - y_2 * 3, 0),
+        text = STRINGS.KISAKI_ACTION.COLLECT,
+        fn = spaceboxcollectbtnfn,
+        validfn = containerDefaultValid,
+    },
+    durability = {
+        position = Vector3(x_1, y_1 - y_2 * 4, 0),
+        text = STRINGS.KISAKI_ACTION.DURABILITY,
+        fn = magicboxdurabilitybtnfn,
+        validfn = containerIsNotEmpty,
+    },
+    fresh = {
+        position = Vector3(x_1, y_1 - y_2 * 5, 0),
+        text = STRINGS.KISAKI_ACTION.FRESH,
+        fn = magicboxfreshbtnfn,
+        validfn = containerIsNotEmpty,
+    },
+    consumedurability = {
+        position = Vector3(x_1, y_1 - y_2 * 6, 0),
+        text = STRINGS.KISAKI_ACTION.CONSUMEDURABILITY,
+        fn = magicboxconsumedurabilitybtnfn,
+        validfn = containerIsNotEmpty,
+    },
+    decay = {
+        position = Vector3(x_1, y_1 - y_2 * 7, 0),
+        text = STRINGS.KISAKI_ACTION.DECAY,
+        fn = magicboxdecaybtnfn,
+        validfn = containerIsNotEmpty,
+    },
+}
+
+function containers_params.kisaki_space_chest_child.itemtestfn(container, item, slot)
+    if slot then
+        return item.prefab == items_list[slot] or items_list[slot] == ""
+    end
+    return true
+end
+
+function containers_params.kisaki_space_chest_child.prioritygivefn(container, item)
+    return items_flag_list[item.prefab]
+end
+
+-- 世界联通箱子
+local proxy_containers = {
+    {
+        name = "kisaki_space_chest_child",
+        prefab = "kisaki_space_chest_child",
+        ui = "anim/ui_kisaki_container_space.zip",
+        widgetname = "kisaki_space_chest_child",
+        -- tags = {},
+    },
+}
+
+for _, v in pairs(proxy_containers) do
+    table.insert(POCKETDIMENSIONCONTAINER_DEFS, v)
+end
+
 -- 重新设置下可接受的最大格子数
 for k, v in pairs(containers_params) do
     containers.MAXITEMSLOTS = math.max(containers.MAXITEMSLOTS, v.widget.slotpos ~= nil and #v.widget.slotpos or 0)

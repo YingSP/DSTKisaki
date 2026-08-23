@@ -27,6 +27,7 @@ AddMinimapAtlas("images/map_icons/" .. avatar_name .. ".xml")
 AddMinimapAtlas("images/inventoryimages/prefabs/kisaki_portable_box.xml")
 AddMinimapAtlas("images/inventoryimages/prefabs/kisaki_magic_box.xml")
 AddMinimapAtlas("images/inventoryimages/prefabs/kisaki_library_box.xml")
+AddMinimapAtlas("images/inventoryimages/prefabs/kisaki_space_chest.xml")
 
 local widgets = {
     "kisaki_magic",

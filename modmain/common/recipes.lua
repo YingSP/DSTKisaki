@@ -19,6 +19,12 @@ AddPrototyperDef("kisaki_library_box", {
     filter_text = STRINGS.UI.CRAFTING_FILTERS.CRAFTING_STATION
 })
 AddPrototyperDef("kisaki_library_box_chest", PROTOTYPER_DEFS.kisaki_library_box)
+AddPrototyperDef("kisaki_space_chest", {
+    icon_atlas = CRAFTING_ICONS_ATLAS,
+    icon_image = "filter_none.tex",
+    is_crafting_station = true, -- 靠近显示不可解锁配方的原型科技
+    filter_text = STRINGS.UI.CRAFTING_FILTERS.CRAFTING_STATION
+})
 
 -- 限制制作栏显示
 if not TUNING.KISAKI_RECIPES_SHARE then
@@ -352,6 +358,24 @@ local recipe_all = {
         ingredients_data = {
             boards = 10,
             kisaki_magic = 1000,
+        },
+        builder_tag = avatar_name,
+        tech = TECH.NONE,
+        isOriginalItem = false,
+        isShown = true,
+        filters = { 'KISAKI_CHARACTER' }
+    },
+    -- 夜莺与黄昏之诗
+    {
+        recipe_name = 'kisaki_space_chest',
+        ingredients_data = {
+            boards = 50,
+            cutstone = 50,
+            kisaki_magic = 1000,
+        },
+        config = {
+            min_spacing = 3,
+            placer = "kisaki_space_chest_placer",
         },
         builder_tag = avatar_name,
         tech = TECH.NONE,

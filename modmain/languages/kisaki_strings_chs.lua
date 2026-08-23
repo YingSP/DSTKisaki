@@ -89,6 +89,14 @@ STRINGS.KISAKI_ACTION = {
     FISHTRADE = "鱼王",
     ANTLIONTRADE = "蚁狮",
     MAPPINGTRADE = "擦纸",
+    PAUSEEIGHTMINUTE = "停八分",
+    PAUSEONEMINUTE = "停一分",
+    PAUSE = "暂停收",
+    CONTINUE = "继续收",
+    FASTESTCD = "3S/次",
+    FASTCD = "10S/次",
+    SLOWCD = "60S/次",
+    SLOWESTCD = "240S/次",
 }
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -220,6 +228,11 @@ local MSG = {
         name = "妃的幻想图书馆",
         desc = "随时随地可以读书是一件幸福的事",
         recipe_desc = "一个便携式书架"
+    },
+    kisaki_space_chest = {
+        name = "夜莺与黄昏之诗",
+        desc = "无论悲剧还是喜剧，故事都终将结束",
+        recipe_desc = "无论悲剧还是喜剧，故事都终将结束"
     },
     kisaki_shadow_protector_gemini = {
         name = "暗影守护者",

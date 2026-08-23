@@ -437,6 +437,17 @@ configuration_options =
 		default = true,
 		hover = "月社妃受到疯狂光环的影响是否随SAN降低降低"
 	},
+	makeTitle("容器设置"),
+	{
+		name = "collect_all_item_scope",
+		label = "容器全图收集功能开关",
+		options = {
+			{ description = "关闭", data = false, hover = "容器全图收集功能关闭" },
+			{ description = "开启", data = true, hover = "容器全图收集功能开启" }
+		},
+		default = true,
+		hover = "不需要可关闭，可优化部分性能"
+	},
 	makeTitle("开发者设置"),
 	{
 		name = "developer_log_level",

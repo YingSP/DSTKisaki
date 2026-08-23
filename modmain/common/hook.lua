@@ -3,6 +3,7 @@ local log = require("utils/kisakilogger")
 local SourceModifierList = require("util/sourcemodifierlist")
 local SpDamageUtil = require("components/spdamageutil")
 local ImageButton = require "widgets/imagebutton"
+local collect_all_item_scope = TUNING.KISAKI_COLLECT_ALL_ITEM_SCOPE
 
 ----------------------------------------------------------------------------组件通信----------------------------------------------------------------------------
 
@@ -56,6 +57,110 @@ for i, prefabname in ipairs(tarder_prefabs) do
         end
     end)
 end
+
+AddPrefabPostInit("kisaki_space_chest_child", function(inst)
+    if TheWorld.ismastersim then
+        inst:AddTag("kisaki_container") -- 特殊tag，防毒雾
+        inst.components.container:EnableInfiniteStackSize(true)
+        inst._chestupgrade_stacksize = true
+        if collect_all_item_scope then
+            inst:DoTaskInTime(0, function()
+                TheWorld.components.kisaki_ents_manager:RegisterChest(inst)
+            end)
+        end
+        inst:AddComponent("preserver") --保鲜
+        -- 消耗升级
+        for i, data in ipairs(TUNING.KISAKI_MAGIC_BOX_FUNCTION_LIST) do
+            local action = data.action
+            inst[action .. "num"] = 0
+            inst[action .. "neednum"] = data.neednum
+        end
+        for i, data in ipairs(TUNING.KISAKI_LIBRARY_BOX_FUNCTION_LIST) do
+            inst[data.id .. "num"] = 0
+        end
+        -- 其他方法
+        inst.addpreserver = function()
+            if inst.freshnum >= inst.freshneednum and inst.preservernum >= inst.preserverneednum then
+                if inst.components.preserver:GetPerishRateMultiplier() ~= -1 then
+                    inst.components.preserver:SetPerishRateMultiplier(-1)
+                end
+            else
+                inst.components.preserver:SetPerishRateMultiplier(0)
+            end
+        end
+        inst.restorationdurability = function()
+            -- 回耐久
+            for i, v in pairs(inst.components.container.slots) do
+                if i > 160 then
+                    if v.components.armor ~= nil and not v.components.armor.indestructible
+                        and v.components.armor:GetPercent() < 10 then -- 护甲类的
+                        v.components.armor:SetPercent(v.components.armor:GetPercent() +
+                            (0.1 / math.ceil(v.components.armor:GetPercent() + 0.0001)))
+                    elseif v.components.finiteuses ~= nil and v.components.finiteuses:GetPercent() < 10 then -- 使用次数类的
+                        local peruse = v.components.finiteuses.total *
+                            (0.1 / math.ceil(v.components.finiteuses:GetPercent() + 0.0001))
+                        v.components.finiteuses:Use(-peruse)                                        -- 可以有小数点
+                    elseif v.components.fueled ~= nil and v.components.fueled:GetPercent() < 1 then -- 燃料，不能超耐久
+                        v.components.fueled:SetPercent(v.components.fueled:GetPercent() + 0.1)
+                    end
+                end
+            end
+        end
+        inst.addrestorationdurability = function()
+            if inst.durabilitynum >= inst.durabilityneednum and inst.autodurabilitynum >= inst.autodurabilityneednum then
+                if inst.restor_ationdurability == nil then
+                    inst.restor_ationdurability = inst:DoPeriodicTask(60, function() inst.restorationdurability() end,
+                        0.1)
+                end
+            else
+                inst.restor_ationdurability = nil
+            end
+        end
+        inst.libraryBoxRefresh = function()
+            local trees = { SCIENCE = 1, MAGIC = 1 }
+            local tags = {}
+            local tag_set = {}
+            local addhermitcrabshop = false
+            local addwanderingtradershop = false
+            for i, data in ipairs(TUNING.KISAKI_LIBRARY_BOX_FUNCTION_LIST) do
+                local id = data.id
+                if data.neednum <= inst[id .. "num"] then
+                    for levelname, level in pairs(data.levels) do
+                        trees[levelname] = level
+                    end
+                    -- 加标签
+                    if data.tags then
+                        for _, tag in ipairs(data.tags) do
+                            table.insert(tags, tag)
+                            tag_set[tag] = true
+                        end
+                    end
+                    -- 额外制作站
+                    if id == "hermitcrabshop" then
+                        addhermitcrabshop = true
+                    elseif id == "wanderingtradershop" then
+                        addwanderingtradershop = true
+                    end
+                end
+            end
+            local removed_trees = {}
+            for levelname, level in pairs(inst.kisaki_library_trees or {}) do
+                if trees[levelname] == nil then
+                    removed_trees[levelname] = level
+                end
+            end
+            local removed_tags = {}
+            for tag in pairs(inst.kisaki_library_tags or {}) do
+                if not tag_set[tag] then
+                    table.insert(removed_tags, tag)
+                end
+            end
+            inst.kisaki_library_trees = trees
+            inst.kisaki_library_tags = tag_set
+            return trees, tags, addhermitcrabshop, addwanderingtradershop, removed_trees, removed_tags
+        end
+    end
+end)
 
 ----------------------------------------------------------------------------HUD修改-----------------------------------------------------------------------------
 
@@ -616,6 +721,58 @@ AddComponentPostInit("container", function(Container)
             end
         end
     end
+
+    -- 适配特殊格子和普通格子并存的情况
+    local oldGetSpecificSlotForItem = Container.GetSpecificSlotForItem
+    function Container:GetSpecificSlotForItem(item, ...)
+        if self.inst.prefab == "kisaki_space_chest_child" and not self.readonlycontainer then
+            local slot = self:prioritygivefn(item)
+            if slot == nil then
+                local isstackable = item.components.stackable ~= nil
+                local prefabname = item.prefab
+                local emptyslot = nil
+                for i = 161, 240 do
+                    local other_item = self.slots[i]
+                    if isstackable and other_item and other_item.prefab then -- 堆叠的情况
+                        if other_item.prefab == prefabname then
+                            return i
+                        end
+                    elseif emptyslot == nil and other_item == nil then -- 没法堆叠的要找到第一个空位
+                        emptyslot = i
+                    end
+                end
+                return emptyslot
+            end
+            return slot
+        end
+        return oldGetSpecificSlotForItem(self, item, ...)
+    end
+end)
+AddClassPostConstruct("components/container_replica", function(Container)
+    local oldGetSpecificSlotForItem = Container.GetSpecificSlotForItem
+    function Container:GetSpecificSlotForItem(item, ...)
+        if self.inst.prefab == "kisaki_space_chest_child" and not self.readonlycontainer then
+            local slot = self:prioritygivefn(item)
+            if slot == nil then
+                local isstackable = item.replica.stackable ~= nil
+                local prefabname = item.prefab
+                local emptyslot = nil
+                for i = 161, 240 do
+                    local other_item = self:GetItemInSlot(i)
+                    if isstackable and other_item and other_item.prefab then -- 堆叠的情况
+                        if other_item.prefab == prefabname then
+                            return i
+                        end
+                    elseif emptyslot == nil and other_item == nil then -- 没法堆叠的要找到第一个空位
+                        emptyslot = i
+                    end
+                end
+                return emptyslot
+            end
+            return slot
+        end
+        return oldGetSpecificSlotForItem(self, item, ...)
+    end
 end)
 
 -- 将魔法值加入到制作配方中
@@ -1119,6 +1276,9 @@ AddPrefabPostInit("world", function(inst)
     end
     -- 给服务器世界添加一个组件用于存储信息
     inst:AddComponent("kisaki_info_save")
+    if collect_all_item_scope then
+        inst:AddComponent("kisaki_ents_manager")
+    end
     -- 角色退出世界时存储信息
     inst:ListenForEvent("ms_playerdespawn", Onplayerdespawnanddelete)
     inst:ListenForEvent("ms_playerdespawnandmigrate", Onplayerdespawnanddelete)

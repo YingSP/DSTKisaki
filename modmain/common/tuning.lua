@@ -68,6 +68,8 @@ TUNING.KISAKI_COLLECTION_MAX = 65
 TUNING.KISAKI_EXTRACT_CONSUME = 1
 TUNING.KISAKI_DISASSEMBLY_CONSUME = 100
 TUNING.KISAKI_DISASSEMBLY_MAX = 1
+-- 全图收集开关
+TUNING.KISAKI_COLLECT_ALL_ITEM_SCOPE = GetModConfigData("collect_all_item_scope")
 -- 角色技能树内容
 TUNING.KISAKI_FSAT_BUILD = GetModConfigData("init_fast_build")   --  角色自带快速制作
 -- 模组开发者配置
@@ -270,6 +272,54 @@ TUNING.KISAKI_ITEM_TRANSFORM_LIST = {
 	ancienttree_gem_sapling_item = "ancienttree_nightvision_sapling_item",
 	ancienttree_nightvision_sapling_item = "ancienttree_gem_sapling_item",
 }
+-- 夜莺与黄昏之诗
+TUNING.KISAKI_SPACE_CHEST_ITEMS = {
+	"cutgrass", "twigs", "cutreeds", "log",
+	"driftwood_log", "palmcone_scale", "charcoal", "lucky_goldnugget",
+	"rocks", "flint", "goldnugget", "nitre",
+	"marble", "moonglass", "moonrocknugget", "saltrock",
+	"townportaltalisman", "gears", "wagpunk_bits", "trinket_6",
+	"boards", "rope", "cutstone", "papyrus",
+	"transistor", "waxpaper", "lifeinjector", "gunpowder",
+	"ancientfruit_gem", "fossil_piece", "wintersfeastfuel", "waterplant_bomb",
+	"pinecone", "palmcone_seed", "acorn", "seeds",
+	"twiggy_nut", "marblebean", "lureplantbulb", "rock_avocado_fruit_sprout",
+	"bluegem", "redgem", "purplegem", "orangegem",
+	"yellowgem", "greengem", "opalpreciousgem", "dreadstone",
+	"thulecite", "thulecite_pieces", "livinglog", "nightmarefuel",
+	"horrorfuel", "lunarplant_husk", "purebrilliance", "voidcloth",
+	"pigskin", "silk", "spidergland", "walrus_tusk",
+	"beefalowool", "manrabbit_tail", "coontail", "tentaclespots",
+	"feather_canary", "feather_crow", "feather_robin", "feather_robin_winter",
+	"houndstooth", "boneshard", "lightninggoathorn", "stinger",
+	"mosquitosack", "slurper_pelt", "slurtle_shellpieces", "beardhair",
+	"honeycomb", "cookiecuttershell", "glommerfuel", "slurtleslime",
+	"spidereggsack", "dragon_scales", "minotaurhorn", "deerclops_eyeball",
+	"goose_feather", "furtuft", "bearger_fur", "phlegm",
+	"steelwool", "malbatross_feather", "bootleg", "shroom_skin",
+	"mandrake", "rock_avocado_fruit", "fireflies", "messagebottleempty",
+	"ash", "poop", "guano", "spoiled_food",
+	"rottenegg", "spoiled_fish", "spoiled_fish_small", "mitegland",
+	"smallmeat", "meat", "plantmeat", "drumstick",
+	"monstermeat", "fishmeat_small", "fishmeat", "froglegs",
+	"trunk_summer", "trunk_winter", "batwing", "batnose",
+	"bird_egg", "tillweed", "forgetmelots", "firenettles",
+	"berries", "berries_juicy", "wormlight", "wormlight_lesser",
+	"red_cap", "green_cap", "blue_cap", "moon_cap",
+	"butterfly", "moonbutterfly", "butterflywings", "moonbutterflywings",
+	"bee", "killerbee", "mosquito", "honey",
+	"petals", "petals_evil", "moon_tree_blossom", "cactus_flower",
+	"cave_banana", "fig", "carrot", "kelp",
+	"butter", "goatmilk", "milkywhites", "royal_jelly",
+	"moonglass_charged", "moonstorm_spark", "ancientfruit_nightvision", "barnacle",
+	"lightbulb", "snowball_item", "ice", "bullkelp_root",
+	"tree_rock_seed", "spore_medium", "spore_small", "spore_tall"
+}
+for i = 1, 80 do
+	table.insert(TUNING.KISAKI_SPACE_CHEST_ITEMS, "")
+end
+table.insert(TUNING.KISAKI_SPACE_CHEST_ITEMS, "kisaki_magic_box")
+table.insert(TUNING.KISAKI_SPACE_CHEST_ITEMS, "kisaki_library_box")
 
 -- 初始物品
 TUNING.KISAKI_STARTING_ITEMS = {
