@@ -30,6 +30,68 @@ local actions = {
             mount_valid = true, -- 骑牛可触发
         },
     },
+    {
+        id = "KISAKITRADER", -- 自己写的交易动作
+        str = STRINGS.KISAKI_ACTION.KISAKITRADER,
+        fn = function(act)
+            if act.doer ~= nil and act.invobject ~= nil and act.target ~= nil and act.target.components.trader then
+                local able, reason = act.target.components.trader:AbleToAccept(act.invobject, act.doer, nil)
+                if not able then
+                    return false, reason
+                end
+                act.target.components.trader:AcceptGift(act.doer, act.invobject, nil)
+                return true
+            end
+        end,
+        state = "give",         -- sg
+        actiondata = {
+            priority = 4,       -- 优先级
+            mount_valid = true, -- 骑牛可触发
+            canforce = true,
+            rangecheckfn = DefaultRangeCheck
+        },
+    },
+    {
+        id = "KISAKIRECYCLE", -- 自己写的回收动作
+        str = STRINGS.KISAKI_ACTION.RECYCLE,
+        fn = function(act)
+            if act.target ~= nil and
+                act.target.components.portablestructure ~= nil and
+                (not (act.target.components.burnable and act.target.components.burnable:IsBurning()) or act.target:HasTag("campfire")) then
+                if act.target.components.container ~= nil then
+                    if not act.target:HasTag("kisaki_chest") then
+                        return false, "NOTEMPTY"
+                    elseif not act.target.components.container.canbeopened then
+                        return false, "COOKING"
+                    end
+                elseif act.target.components.sleepingbag and act.target.components.sleepingbag:InUse() then
+                    return false, "INUSE"
+                end
+
+                if act.target.candismantle and not act.target:candismantle() then
+                    return false
+                end
+
+                act.target.components.portablestructure:Dismantle(act.doer)
+                return true
+            end
+        end,
+        state = "dolongaction", -- sg
+        actiondata = {
+            priority = 4,       -- 优先级
+            rmb = true
+        },
+    },
+    {
+        id = "KISAKIRUMMAGE", -- 自己写的打开容器动作
+        str = STRINGS.KISAKI_ACTION.KISAKIRUMMAGE,
+        fn = ACTIONS.RUMMAGE.fn,
+        state = "doshortaction", -- sg
+        actiondata = {
+            priority = 4,        -- 优先级
+            mount_valid = true
+        },
+    },
 }
 
 -- 动作与组件进行绑定
@@ -44,6 +106,62 @@ local component_actions = {
                     return inst and inst:HasTag("kisaki_amulet") and inst:HasTag("switchable") and
                         inst.replica.equippable ~= nil and inst.replica.equippable:IsEquipped() and
                         not inst:HasTag("usesdepleted")
+                end,
+            },
+        },
+    },
+    {
+        type = "SCENE",
+        component = "portablestructure",
+        data = {
+            {
+                action = "KISAKIRECYCLE", -- 右键回收功能
+                checkfn = function(inst, doer, actionlist, right)
+                    if not right then
+                        return false
+                    end
+                    local iscampfire = inst:HasTag("campfire")
+                    if inst:HasTag("kisaki_chest") and
+                        not (iscampfire and inst:HasTag("portable_campfire") and not doer:HasTag("portable_campfire_user")) and
+                        (iscampfire or not inst:HasTag("fire")) and --other structures can't be burning
+                        (not inst:HasTag("mastercookware") or doer:HasTag("masterchef")) and
+                        (not inst:HasTag("engineering") or doer:HasTag("portableengineer"))
+                    then
+                        return true
+                    else
+                        return false
+                    end
+                end,
+            },
+        },
+    },
+    {
+        type = "SCENE",
+        component = "container",
+        data = {
+            {
+                action = "KISAKIRUMMAGE", -- 打开容器功能
+                checkfn = function(inst, doer, actionlist, right)
+                    if inst:HasTag("kisaki_chest") and not inst:HasTag("burnt")
+                        and inst.replica.container:CanBeOpened()
+                        and doer.replica.inventory ~= nil
+                        and (not inst:HasTag("oceantrawler") or not inst:HasTag("trawler_lowered"))
+                        and not (doer.replica.rider ~= nil and doer.replica.rider:IsRiding()) then
+                        return true
+                    end
+                end,
+            },
+        },
+    },
+    {
+        type = "USEITEM",
+        component = "inventoryitem",
+        data = {
+            {
+                action = "KISAKITRADER", -- 交易功能
+                -- inst这里是物品A，doer是动作执行者，这里是一般为玩家，target动作执行对象，actionlist可触发的动作列表。right=true，是否是右键动作
+                checkfn = function(inst, doer, target, actionlist, right)
+                    return inst and target and target:HasTag("trader") and target:HasTag("kisakitrader")
                 end,
             },
         },

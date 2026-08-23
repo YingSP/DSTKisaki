@@ -11,6 +11,14 @@ AddRecipeFilter({
     atlas = "images/inventoryimages/widget/kisaki_character.xml",
     image = "kisaki_character.tex",
 })
+-- 靠近原型机，打开哪个筛选栏(月亮科技之类的,想要加配方，可以修改CRAFTING_FILTERS.CRAFTING_STATION.recipes)
+AddPrototyperDef("kisaki_library_box", {
+    icon_atlas = CRAFTING_ICONS_ATLAS,
+    icon_image = "filter_none.tex",
+    is_crafting_station = true, -- 靠近显示不可解锁配方的原型科技
+    filter_text = STRINGS.UI.CRAFTING_FILTERS.CRAFTING_STATION
+})
+AddPrototyperDef("kisaki_library_box_chest", PROTOTYPER_DEFS.kisaki_library_box)
 
 -- 限制制作栏显示
 if not TUNING.KISAKI_RECIPES_SHARE then
@@ -310,6 +318,46 @@ local recipe_all = {
         isOriginalItem = false,
         isShown = true,
         filters = { 'KISAKI_TALISMAN' }
+    },
+    -- 妃的杂物袋
+    {
+        recipe_name = 'kisaki_portable_box',
+        ingredients_data = {
+            papyrus = 4,
+            silk = 4,
+            kisaki_magic = 160,
+        },
+        builder_tag = avatar_name,
+        tech = TECH.NONE,
+        isOriginalItem = false,
+        isShown = true,
+        filters = { 'KISAKI_CHARACTER' }
+    },
+    -- 妃的幻想图书馆
+    {
+        recipe_name = 'kisaki_library_box',
+        ingredients_data = {
+            livinglog = 4,
+            kisaki_magic = 100,
+        },
+        builder_tag = avatar_name,
+        tech = TECH.NONE,
+        isOriginalItem = false,
+        isShown = true,
+        filters = { 'KISAKI_CHARACTER' }
+    },
+    -- 妃的魔法盒
+    {
+        recipe_name = 'kisaki_magic_box',
+        ingredients_data = {
+            boards = 10,
+            kisaki_magic = 1000,
+        },
+        builder_tag = avatar_name,
+        tech = TECH.NONE,
+        isOriginalItem = false,
+        isShown = true,
+        filters = { 'KISAKI_CHARACTER' }
     },
 }
 

@@ -63,8 +63,32 @@ STRINGS.CHARACTERS.KISAKI = {
 
 STRINGS.KISAKI_ACTION = {
     OPENORCLOSEAMULETWITHRIGHT = "开关",
+    KISAKITRADER = "给予",
+    RECYCLE = "回收",
+    KISAKIRUMMAGE = "打开",
     OPENGEMINIAMULET = "已开启双子守护",
     CLOSEGEMINIAMULET = "已关闭双子守护",
+    COLLECT = "收集",
+    MORE = "更多",
+    STORAGE = "快存",
+    TIDY = "整理",
+    UPGRADE = "升级",
+    COLLECTION = "采集",
+    FISHING = "捕鱼",
+    CONVERSION = "转化",
+    WORK = "工作",
+    FRESH = "回鲜",
+    DURABILITY = "回耐",
+    CONSUMEDURABILITY = "消耐",
+    FIRE = "魔火",
+    DECAY = "腐烂",
+    EXTRACT = "提取",
+    DISASSEMBLY = "拆解",
+    PIGTRADE = "猪王",
+    BIRDTRADE = "鸟笼",
+    FISHTRADE = "鱼王",
+    ANTLIONTRADE = "蚁狮",
+    MAPPINGTRADE = "擦纸",
 }
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -73,6 +97,9 @@ STRINGS.UI.CRAFTING_FILTERS.KISAKI_TALISMAN = "妃的守护命符"
 STRINGS.UI.CRAFTING_FILTERS.KISAKI_CHARACTER = "妃的魔法道具"
 
 STRINGS.UI.CRAFTING.NEEDSTECH.KISAKI = "月社妃知道如何制作"
+STRINGS.UI.CRAFTING.NEEDSKISAKI_BOOKCRAFT_ONE = "需要幻想图书馆解锁"
+STRINGS.UI.CRAFTING.NEEDSKISAKI_SCULPTING_ONE = "需要幻想图书馆的陶轮解锁"
+
 -- 模组物品被原版交互后语句添加
 local MSG = {
     kisaki = {
@@ -163,6 +190,36 @@ local MSG = {
         name = "星灵守护-群星",
         desc = "众星之力",
         recipe_desc = "来自星空的记忆"
+    },
+    kisaki_portable_box = {
+        name = "妃的杂物袋",
+        desc = "可以拿来存储一些基础物资",
+        recipe_desc = "可以拿来存储一些基础物资"
+    },
+    kisaki_portable_box_chest = {
+        name = "妃的杂物袋",
+        desc = "可以拿来存储一些基础物资",
+        recipe_desc = "可以拿来存储一些基础物资"
+    },
+    kisaki_magic_box = {
+        name = "妃的魔法盒",
+        desc = "魔法，无所不能",
+        recipe_desc = "使用强大魔法凝聚的盒子"
+    },
+    kisaki_magic_box_chest = {
+        name = "妃的魔法盒",
+        desc = "魔法，无所不能",
+        recipe_desc = "使用强大魔法凝聚的盒子"
+    },
+    kisaki_library_box = {
+        name = "妃的幻想图书馆",
+        desc = "随时随地可以读书是一件幸福的事",
+        recipe_desc = "一个便携式书架"
+    },
+    kisaki_library_box_chest = {
+        name = "妃的幻想图书馆",
+        desc = "随时随地可以读书是一件幸福的事",
+        recipe_desc = "一个便携式书架"
     },
     kisaki_shadow_protector_gemini = {
         name = "暗影守护者",

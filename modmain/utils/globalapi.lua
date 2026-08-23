@@ -13,6 +13,73 @@ function KisakiCD(ti, real)
     end
 end
 
+-- shift移动物品不回原容器
+function KisakiMoveItemFromAllOfSlot(self, slot, container, opener, ...)
+    if self.readonlycontainer then
+        return
+    end
+    local item = self:GetItemInSlot(slot)
+    if item ~= nil and container ~= nil then
+        container = container.components.container or container.components.inventory
+        if container ~= nil and container:IsOpenedBy(opener) then
+            self.currentuser = opener
+            container.currentuser = opener
+
+            local targetslot =
+                opener.components.constructionbuilderuidata ~= nil and
+                opener.components.constructionbuilderuidata:GetContainer() == container.inst and
+                opener.components.constructionbuilderuidata:GetSlotForIngredient(item.prefab) or
+                nil
+
+            if container:CanTakeItemInSlot(item, targetslot) then
+                local shouldignoresound = false
+                if not (item.components.stackable and item.components.stackable:IsOverStacked()) then
+                    item = self:RemoveItemBySlot(slot)
+                elseif container.infinitestacksize then
+                    --target container can accept overstacked items!
+                    self.ignoreoverstacked = true
+                    item = self:RemoveItemBySlot(slot)
+                    self.ignoreoverstacked = false
+                else
+                    item = item.components.stackable:Get(item.components.stackable.originalmaxsize)
+                    shouldignoresound = true
+                end
+                if item ~= nil then
+                    -- 加标签，其他都是抄的原版代码
+                    item.pre_kisaki_container_name = self.inst.prefab
+                    item.prevcontainer = nil
+                    item.prevslot = nil
+
+                    --Hacks for altering normal inventory:GiveItem() behaviour
+                    if container.ignoreoverflow ~= nil and container:GetOverflowContainer() == self then
+                        container.ignoreoverflow = true
+                    end
+                    if container.ignorefull ~= nil then
+                        container.ignorefull = true
+                    end
+
+                    if not container:GiveItem(item, targetslot, nil, false) then
+                        self.ignoresound = shouldignoresound
+                        self:GiveItem(item, slot, nil, true)
+                        self.ignoresound = false
+                    end
+
+                    --Hacks for altering normal inventory:GiveItem() behaviour
+                    if container.ignoreoverflow then
+                        container.ignoreoverflow = false
+                    end
+                    if container.ignorefull then
+                        container.ignorefull = false
+                    end
+                end
+            end
+
+            self.currentuser = nil
+            container.currentuser = nil
+        end
+    end
+end
+
 -- UI拖拽相关（代码来自勋章）每次重启都在原地址初始化一下，然后把UI移动到本地存储的位置
 local uiloot = {}  -- UI列表，方便重置
 local dragpos = {} -- 拖拽坐标，局部变量存储，减少io操作
@@ -267,6 +334,7 @@ function KisakiMakeWidgetMovable(s, name, pos, data)
 end
 
 GLOBAL.KisakiCD = KisakiCD
+GLOBAL.KisakiMoveItemFromAllOfSlot = KisakiMoveItemFromAllOfSlot -- 模组容器shift取东西要加标识符
 GLOBAL.KisakiMakeDragableUI = KisakiMakeDragableUI               -- 设置UI可拖拽(右键)
 GLOBAL.KisakiGetDragPos = KisakiGetDragPos                       -- 获取拖拽UI坐标
 GLOBAL.KisakiResetUIPos = KisakiResetUIPos                       -- 重置拖拽UI坐标

@@ -38,6 +38,36 @@ TUNING.KISAKI_GOST_FAST = GetModConfigData("init_gost_fast")                    
 TUNING.KISAKI_STRONGGER = GetModConfigData("init_stronggr")                         --  角色不会因为潮湿等原因武器脱手
 TUNING.KISAKI_HEALTH_PUNISHMENT = GetModConfigData("init_health_punishment")        --  角色掉血惩罚
 TUNING.KISAKI_SANITY_PUNISHMENT = GetModConfigData("init_sanity_punishment")        --  角色低SAN惩罚
+-- 妃的魔法盒相关
+TUNING.KISAKI_BOX_COLLECT_SCOPE = 45
+TUNING.KISAKI_BOX_COLLECT_FISH_SCOPE = 16
+TUNING.KISAKI_BOX_COLLECTION_FISH_SCOPE = 32
+TUNING.KISAKI_BOX_WORK_SCOPE = 16
+TUNING.KISAKI_CONSUME_MAGIC_ENABLE = true
+TUNING.KISAKI_CONSUME_HUNGER_ENABLE = true
+TUNING.KISAKI_CONSUME_SANITY_ENABLE = true
+TUNING.KISAKI_CONSUME_HEALTH_ENABLE = true
+TUNING.KISAKI_COLLECT_CONSUME = 5
+TUNING.KISAKI_COLLECT_MAX = 25
+TUNING.KISAKI_FISH_CONSUME = 10
+TUNING.KISAKI_FISH_MAX = 15
+TUNING.KISAKI_CONVERSION_CONSUME = 10
+TUNING.KISAKI_CONVERSION_MAX = 15
+TUNING.KISAKI_WORK_CONSUME = 5
+TUNING.KISAKI_WORK_MAX = 100
+TUNING.KISAKI_FRESH_CONSUME = 5
+TUNING.KISAKI_FRESH_MAX = 25
+TUNING.KISAKI_DURABILITY_CONSUME = 100
+TUNING.KISAKI_DURABILITY_MAX = 1
+TUNING.KISAKI_CONSUMEDURABILITY_CONSUME = 100
+TUNING.KISAKI_CONSUMEDURABILITY_MAX = 1
+TUNING.KISAKI_DECAY_CONSUME = 5
+TUNING.KISAKI_DECAY_MAX = 25
+TUNING.KISAKI_COLLECTION_CONSUME = 2
+TUNING.KISAKI_COLLECTION_MAX = 65
+TUNING.KISAKI_EXTRACT_CONSUME = 1
+TUNING.KISAKI_DISASSEMBLY_CONSUME = 100
+TUNING.KISAKI_DISASSEMBLY_MAX = 1
 -- 角色技能树内容
 TUNING.KISAKI_FSAT_BUILD = GetModConfigData("init_fast_build")   --  角色自带快速制作
 -- 模组开发者配置
@@ -57,7 +87,88 @@ TUNING.CURSELIST = {
 	["cursed_monkey_token"] = true
 }                                   --  会自动删除的诅咒列表
 TUNING.KISAKI_GOST_MOVE_SPEED = 1.8 --  角色死亡后移速倍率
-
+-- 升级魔法盒的物品
+TUNING.KISAKI_MAGIC_BOX_FUNCTION_LIST = {
+	-- 采集
+	{ action = "collection", name = "物品采集", needprefab = "orangeamulet", neednum = 1, },
+	-- 捕鱼
+	{ action = "fish", name = "海上捞鱼", needprefab = "ocean_trawler_kit", neednum = 10, },
+	-- 摸鱼
+	{ action = "catchfish", name = "陆地摸鱼", needprefab = "fishingrod", neednum = 50, },
+	-- 回鲜
+	{ action = "fresh", name = "物品返鲜", needprefab = "blueamulet", neednum = 1, },
+	-- 返鲜
+	{ action = "preserver", name = "容器自动返鲜(前置物品返鲜)", needprefab = "saltrock", neednum = 20, },
+	-- 回耐
+	{ action = "durability", name = "物品回耐", needprefab = "greenamulet", neednum = 5, },
+	-- 消耐
+	{ action = "consumedurability", name = "耐久消耗", needprefab = "purpleamulet", neednum = 5, },
+	-- 自动回耐
+	{ action = "autodurability", name = "容器自动回耐(前置物品回耐)", needprefab = "opalpreciousgem", neednum = 5, },
+	-- 火焰
+	{ action = "fire", name = "火焰魔法", needprefab = "charcoal", neednum = 50, },
+	-- 腐烂
+	{ action = "decay", name = "物品腐烂", needprefab = "spoiled_food", neednum = 50, },
+	-- 工作
+	{ action = "work", name = "快速工作", needprefab = "multitool_axe_pickaxe", neednum = 1, },
+	-- 提取
+	{ action = "extract", name = "以太提取", needprefab = "kisaki_ether_bottle", neednum = 5, },
+	-- 转换
+	{ action = "conversion", name = "物品转换", needprefab = "kisaki_ether", neednum = 999, },
+	-- 拆解
+	{ action = "disassembly", name = "批量拆解", needprefab = "greenstaff", neednum = 5, },
+	-- 猪王交易
+	{ action = "pigtrade", name = "猪王交易", needprefab = "goldnugget", neednum = 50, },
+	-- 鸟笼交易
+	{ action = "birdtrade", name = "鸟笼交易", needprefab = "bird_egg", neednum = 50, },
+	-- 鱼人王交易
+	{ action = "fishtrade", name = "鱼王交易", needprefab = "pondfish", neednum = 50, },
+	-- 蚁狮交易
+	{ action = "antliontrade", name = "蚁狮交易", needprefab = "townportaltalisman", neednum = 50, },
+	-- 制图桌擦纸
+	{ action = "mappingtrade", name = "快速擦纸", needprefab = "compass", neednum = 1, },
+	-- 无消耗
+	{ action = "noconsume", name = "功能无耗", needprefab = "skeletonhat", neednum = 1, },
+}
+-- 升级幻想图书馆的物品
+TUNING.KISAKI_LIBRARY_BOX_FUNCTION_LIST = {
+	-- 书本回耐久加速
+	{ id = "fast", name = "回耐加速", levels = {}, needprefab = "opalpreciousgem", neednum = 1, },
+	-- 二本
+	{ id = "science", name = "炼金科技", levels = { SCIENCE = 2 }, needprefab = "gears", neednum = 2, },
+	-- 四本
+	{ id = "magic", name = "魔法科技", levels = { MAGIC = 3 }, needprefab = "purplegem", neednum = 1, },
+	-- 月亮科技
+	{ id = "celestial", name = "月亮科技", levels = { CELESTIAL = 3 }, tags = { "celestial_station" }, needprefab = "moonglass", neednum = 20, },
+	-- 远古科技
+	{ id = "ancient", name = "远古科技", levels = { ANCIENT = 4 }, tags = { "ancient_station" }, needprefab = "thulecite_pieces", neednum = 20, },
+	-- 暗影术基座
+	{ id = "shadowforging", name = "暗影科技", levels = { SHADOWFORGING = 2 }, tags = { "shadow_forge" }, needprefab = "horrorfuel", neednum = 5 },
+	-- 辉煌铁匠铺
+	{ id = "lunarforging", name = "辉煌科技", levels = { LUNARFORGING = 2 }, tags = { "lunar_forge" }, needprefab = "purebrilliance", neednum = 5, },
+	-- 陶轮
+	{ id = "sculpting", name = "陶轮科技", levels = { KISAKI_SCULPTING = 1 }, needprefab = "fossil_piece", neednum = 1, },
+	-- 智囊团
+	{ id = "seafaring", name = "航海科技", levels = { SEAFARING = 2 }, needprefab = "driftwood_log", neednum = 10, },
+	-- 制图桌
+	{ id = "cartography", name = "制图科技", levels = { CARTOGRAPHY = 2 }, needprefab = "compass", neednum = 1, },
+	-- 钓鱼容器
+	{ id = "fishing", name = "钓鱼科技", levels = { FISHING = 1 }, needprefab = "feather_robin", neednum = 10, },
+	-- 调料站
+	{ id = "foodprocessing", name = "调料科技", levels = { FOODPROCESSING = 1 }, needprefab = "spice_sugar", neednum = 10, },
+	-- 蟹奶奶
+	{ id = "hermitcrabshop", name = "瓶子交易", levels = { HERMITCRABSHOP = 7 }, needprefab = "winter_ornament_boss_pearl", neednum = 1, },
+	-- 流浪商人
+	{ id = "wanderingtradershop", name = "流浪商人", levels = { WANDERINGTRADERSHOP = 2 }, needprefab = "ash", neednum = 20, },
+	-- 友善兔王
+	{ id = "rabbitkingshop", name = "友善兔王", levels = { RABBITKINGSHOP = 2 }, needprefab = "carrot", neednum = 20, },
+	-- 锯马
+	{ id = "carpentry", name = "锯马科技", levels = { CARPENTRY = 3 }, tags = { "carpentry_station" }, needprefab = "flint", neednum = 20, },
+	-- 老瓦科技
+	{ id = "wagpunk_workstation", name = "老瓦科技", levels = { WAGPUNK_WORKSTATION = 2 }, needprefab = "wagpunk_bits", neednum = 10, },
+	-- 土地夯实器
+	{ id = "turfcrafting", name = "地皮科技", levels = { TURFCRAFTING = 2, MASHTURFCRAFTING = 2 }, needprefab = "turf_carpetfloor", neednum = 3, },
+}
 -- 物品转换表
 TUNING.KISAKI_ITEM_TRANSFORM_LIST = {
 	flint = "rocks",

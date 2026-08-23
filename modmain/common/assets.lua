@@ -24,10 +24,14 @@ Assets = {
 
 -- 注册地图图标(还需要在prefeb引用)
 AddMinimapAtlas("images/map_icons/" .. avatar_name .. ".xml")
+AddMinimapAtlas("images/inventoryimages/prefabs/kisaki_portable_box.xml")
+AddMinimapAtlas("images/inventoryimages/prefabs/kisaki_magic_box.xml")
+AddMinimapAtlas("images/inventoryimages/prefabs/kisaki_library_box.xml")
 
 local widgets = {
     "kisaki_magic",
     "kisaki_talisman",
+    "kisaki_container_ui",
     "kisaki_character",
 }
 for key, value in pairs(widgets) do
