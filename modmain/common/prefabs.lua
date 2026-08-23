@@ -6,5 +6,6 @@ PrefabFiles = {
     "kisaki_shadow_protector",
     "kisaki_boxes",
     "kisaki_space_chest",
+    "kisaki_yog_key",
     "kisaki_projectiles",
 }

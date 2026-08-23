@@ -128,7 +128,7 @@ end
 
 -- 设置UI可拖拽(self,拖拽目标,拖拽标签key,拖拽信息)
 function KisakiMakeDragableUI(self, dragtarget, dragtype, dragdata, defaultpos)
-    self.kisakicandrag = true         -- 可拖拽标识(防止重复添加拖拽功能)
+    self.kisakicandrag = true                       -- 可拖拽标识(防止重复添加拖拽功能)
     uiloot[self] = defaultpos or self:GetPosition() -- 存储UI默认坐标
     -- 设置右键拖拽
     if dragtarget then
@@ -211,15 +211,15 @@ function KisakiMakeWidgetMovable(s, name, pos, data)
     s.onikirimovable = {} --初始化表
     local m = s.onikirimovable
     m.nullfn = function() end
-    m.name = name or "default" --存储位置名称，默认为"default"
-    m.self = s --存储UI实体
-    m.downtime = 0 --鼠标按下时间
-    m.whiletime = 0.4 --触发拖动的时间阈值
-    m.cd = KisakiCD(0.5) --创建一个内置cd，用于限制拖动频率
+    m.name = name or "default"       --存储位置名称，默认为"default"
+    m.self = s                       --存储UI实体
+    m.downtime = 0                   --鼠标按下时间
+    m.whiletime = 0.4                --触发拖动的时间阈值
+    m.cd = KisakiCD(0.5)             --创建一个内置cd，用于限制拖动频率
     m.dpos = pos or Vector3(0, 0, 0) --默认位置向量
-    m.pos = pos or Vector3(0, 0, 0) --当前位置向量
-    m.ha = data and data.ha or 1 --水平对其
-    m.va = data and data.va or 2 --垂直对其
+    m.pos = pos or Vector3(0, 0, 0)  --当前位置向量
+    m.ha = data and data.ha or 1     --水平对其
+    m.va = data and data.va or 2     --垂直对其
 
     --从存档中读取位置信息
     m.x, m.y = TheSim:GetScreenSize()
@@ -227,9 +227,9 @@ function KisakiMakeWidgetMovable(s, name, pos, data)
         if load_success then
             local fn = loadstring(str) --将字符串转换为函数
             if type(fn) == "function" then
-                m.pos = fn() --调用函数获取位置向量
+                m.pos = fn()           --调用函数获取位置向量
                 if not (type(m.pos) == "table" and m.pos.Get) then
-                    m.pos = pos --如果位置不对，则使用默认位置
+                    m.pos = pos        --如果位置不对，则使用默认位置
                 end
             end
         end
@@ -238,7 +238,7 @@ function KisakiMakeWidgetMovable(s, name, pos, data)
 
     m.OnControl = s.OnControl or m.nullfn
     s.OnControl = function(self, control, down)
-        if  self.focus and control == CONTROL_ACCEPT then
+        if self.focus and control == CONTROL_ACCEPT then
             if down then
                 if not m.down then
                     m.down = true
@@ -259,8 +259,8 @@ function KisakiMakeWidgetMovable(s, name, pos, data)
         if s.focus and key == KEY_SPACE and not down and not m.cd() then
             s:SetPosition(m.dpos:Get()) --位置重置为默认位置
             TheSim:SetPersistentString(m.name, string.format(
-                                           "return Vector3(%d,%d,%d)",
-                                           m.dpos:Get()), false) --重置后的位置存入存档
+                "return Vector3(%d,%d,%d)",
+                m.dpos:Get()), false) --重置后的位置存入存档
         end
         return m.OnRawKey(self, key, down, ...)
     end
@@ -273,8 +273,8 @@ function KisakiMakeWidgetMovable(s, name, pos, data)
                 print(s, name, newpos:Get())
             end
             TheSim:SetPersistentString(m.name, string.format(
-                                           "return Vector3(%f,%f,%f)",
-                                           newpos:Get()), false)
+                "return Vector3(%f,%f,%f)",
+                newpos:Get()), false)
         end
         if m.lastx and m.lasty and s.o_pos then
             s.o_pos = Vector3(m.lastx, m.lasty, 0)
@@ -314,11 +314,10 @@ function KisakiMakeWidgetMovable(s, name, pos, data)
         s.SetPosition(self, nx, ny, 0)
     end
     m.FollowMouse = function(self)
-
         if m.followhandler == nil then
             m.followhandler = TheInput:AddMoveHandler(function(x, y)
-                    m.UpdatePosition(self, x, y)
-                end)
+                m.UpdatePosition(self, x, y)
+            end)
             local spos = TheInput:GetScreenPosition()
             m.UpdatePosition(self, spos.x, spos.y)
             -- self:SetPosition()

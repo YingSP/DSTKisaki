@@ -50,9 +50,9 @@ local function MakeItem(name, def)
         inst:AddComponent("stackable") -- 可堆叠
         inst.components.stackable.maxsize = def.maxsize or TUNING.STACK_SIZE_PELLET
 
-        inst:AddComponent("tradable")  -- 可交易
+        inst:AddComponent("tradable") -- 可交易
 
-        MakeHauntableLaunch(inst)      -- 可作祟
+        MakeHauntableLaunch(inst)     -- 可作祟
 
         -- 额外执行方法
         if def.master_postinit then

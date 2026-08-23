@@ -383,6 +383,19 @@ local recipe_all = {
         isShown = true,
         filters = { 'KISAKI_CHARACTER' }
     },
+    -- 门之钥
+    {
+        recipe_name = 'kisaki_yog_key',
+        ingredients_data = {
+            purplegem = 1,
+            goldnugget = 99,
+        },
+        builder_tag = avatar_name,
+        tech = TECH.NONE,
+        isOriginalItem = false,
+        isShown = true,
+        filters = { 'KISAKI_CHARACTER' }
+    },
 }
 
 -- 加载动画资源

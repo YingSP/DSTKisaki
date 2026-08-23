@@ -7,6 +7,12 @@ local function MakeRangeCheckFn(range)
 end
 local DefaultRangeCheck = MakeRangeCheckFn(4)
 
+local NOTENTCHECK_CANT_TAGS = { "FX", "INLIMBO" }
+local function noentcheckfn(pt)
+    return not TheWorld.Map:IsPointNearHole(pt) and
+        #TheSim:FindEntities(pt.x, pt.y, pt.z, 1, nil, NOTENTCHECK_CANT_TAGS) == 0
+end
+
 -- 自定义动作
 local actions = {
     {
@@ -31,6 +37,34 @@ local actions = {
         },
     },
     {
+        id = "OPENLINKCONTAINERPROXY", -- 右键开关世界箱子关联器
+        str = STRINGS.KISAKI_ACTION.OPENLINKCONTAINERPROXY,
+        fn = function(act)
+            if act.doer ~= nil and act.invobject ~= nil and act.invobject:HasTag("kisaki_container_linker") then
+                local prefab = act.invobject
+                if prefab.container then
+                    if prefab.current_opener then
+                        prefab.container.components.container_proxy:Close(prefab.current_opener)
+                    end
+                    prefab.container:Remove()
+                    prefab.container = nil
+                else
+                    prefab.container = SpawnPrefab("kisaki_yog_key_container")
+                    prefab.container.link_prefab = prefab
+                    prefab.container.components.container_proxy:Open(act.doer)
+                    prefab.current_opener = act.doer
+                end
+                return true
+            end
+        end,
+        state = "doaction",     -- sg
+        actiondata = {
+            priority = 1,       -- 优先级
+            instant = true,     -- 是否立即触发
+            mount_valid = true, -- 骑牛可触发
+        },
+    },
+    {
         id = "KISAKITRADER", -- 自己写的交易动作
         str = STRINGS.KISAKI_ACTION.KISAKITRADER,
         fn = function(act)
@@ -40,6 +74,68 @@ local actions = {
                     return false, reason
                 end
                 act.target.components.trader:AcceptGift(act.doer, act.invobject, nil)
+                return true
+            end
+        end,
+        state = "give",         -- sg
+        actiondata = {
+            priority = 4,       -- 优先级
+            mount_valid = true, -- 骑牛可触发
+            canforce = true,
+            rangecheckfn = DefaultRangeCheck
+        },
+    },
+    {
+        id = "KISAKIOPENDOOR", -- 门之钥开门
+        str = STRINGS.KISAKI_ACTION.KISAKIOPENDOOR,
+        fn = function(act)
+            if act.doer ~= nil and act.invobject ~= nil and act.target ~= nil then
+                local chest_list = TheWorld.components.kisaki_ents_manager.chest_list
+                if not chest_list or not next(chest_list) then return end
+                -- 找到离玩家最近的
+                local pt = act.doer:GetPosition()
+                local closest_distance = nil
+                local closest_chest = nil
+                for chest, value in pairs(chest_list) do
+                    print("当前世界列表里的容器" .. tostring(chest))
+                    if not closest_distance or chest:GetDistanceSqToPoint(pt) < closest_distance then
+                        closest_distance = chest:GetDistanceSqToPoint(pt)
+                        closest_chest = chest
+                    end
+                end
+                if not closest_chest then return end
+                local closest_chest_pt = closest_chest:GetPosition()
+
+                -- 玩家边上进入的洞
+                local offset = FindWalkableOffset(pt, math.random() * TWOPI, 3 + math.random(), 16, false, true,
+                        noentcheckfn, true, true)
+                    or FindWalkableOffset(pt, math.random() * TWOPI, 5 + math.random(), 16, false, true, noentcheckfn,
+                        true, true)
+                    or FindWalkableOffset(pt, math.random() * TWOPI, 7 + math.random(), 16, false, true, noentcheckfn,
+                        true, true)
+                if offset ~= nil then
+                    pt = pt + offset
+                end
+                -- 目标位置边上的洞
+                local closest_chest_pt_offset = FindWalkableOffset(closest_chest_pt, math.random() * TWOPI,
+                        3 + math.random(), 16, false, true,
+                        noentcheckfn, true,
+                        true)
+                    or FindWalkableOffset(closest_chest_pt, math.random() * TWOPI, 5 + math.random(), 16, false, true,
+                        noentcheckfn,
+                        true, true)
+                    or FindWalkableOffset(closest_chest_pt, math.random() * TWOPI, 7 + math.random(), 16, false, true,
+                        noentcheckfn,
+                        true, true)
+                if closest_chest_pt_offset ~= nil then
+                    closest_chest_pt = closest_chest_pt + closest_chest_pt_offset
+                end
+
+                -- 生成虫洞
+                local portal = SpawnPrefab("pocketwatch_portal_entrance")
+                portal.Transform:SetPosition(pt:Get())
+                portal:SpawnExit(closest_chest_pt.recall_worldid, closest_chest_pt.x, closest_chest_pt.y,
+                    closest_chest_pt.z)
                 return true
             end
         end,
@@ -100,6 +196,12 @@ local component_actions = {
         type = "INVENTORY",
         component = "inventoryitem",
         data = {
+            {
+                action = "OPENLINKCONTAINERPROXY", -- 右键开关世界箱子关联器
+                checkfn = function(inst, doer, actionlist, right)
+                    return inst and inst:HasTag("kisaki_container_linker")
+                end,
+            },
             {
                 action = "OPENORCLOSEAMULETWITHRIGHT", -- 右键开关护符功能
                 checkfn = function(inst, doer, actionlist, right)
@@ -180,6 +282,13 @@ local component_actions = {
                 -- inst这里是物品A，doer是动作执行者，这里是一般为玩家，target动作执行对象，actionlist可触发的动作列表。right=true，是否是右键动作
                 checkfn = function(inst, doer, target, actionlist, right)
                     return inst and target and target:HasTag("trader") and target:HasTag("kisakitrader")
+                end,
+            },
+            {
+                action = "KISAKIOPENDOOR", -- 门之钥开门
+                -- inst这里是物品A，doer是动作执行者，这里是一般为玩家，target动作执行对象，actionlist可触发的动作列表。right=true，是否是右键动作
+                checkfn = function(inst, doer, target, actionlist, right)
+                    return inst and target and inst.prefab == "kisaki_yog_key"
                 end,
             },
         },

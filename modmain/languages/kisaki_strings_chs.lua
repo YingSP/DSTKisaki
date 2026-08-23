@@ -65,7 +65,9 @@ STRINGS.KISAKI_ACTION = {
     OPENORCLOSEAMULETWITHRIGHT = "开关",
     KISAKITRADER = "给予",
     RECYCLE = "回收",
+    OPENLINKCONTAINERPROXY = "使用",
     KISAKIRUMMAGE = "打开",
+    KISAKIOPENDOOR = "开门",
     OPENGEMINIAMULET = "已开启双子守护",
     CLOSEGEMINIAMULET = "已关闭双子守护",
     COLLECT = "收集",
@@ -233,6 +235,11 @@ local MSG = {
         name = "夜莺与黄昏之诗",
         desc = "无论悲剧还是喜剧，故事都终将结束",
         recipe_desc = "无论悲剧还是喜剧，故事都终将结束"
+    },
+    kisaki_yog_key = {
+        name = "门之钥",
+        desc = "诸界之扉的银白钥匙，通晓万物归一者。",
+        recipe_desc = "诸界之扉的银白钥匙，通晓万物归一者。"
     },
     kisaki_shadow_protector_gemini = {
         name = "暗影守护者",
