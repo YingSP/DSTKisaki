@@ -149,7 +149,7 @@ local function GetNinePlantPoints(pt)
     return points
 end
 
--- 使用原版 spellcaster 的远程快速施法流程，动作距离与 sorapick 相同（20 格）。
+-- 使用原版 spellcaster 的远程快速施法流程，20 格。
 local function PlantNineSeeds(staff, target, pt, doer)
     if doer == nil or pt == nil or doer.components.inventory == nil then
         return
@@ -260,7 +260,7 @@ local function OnUse(inst)
 end
 
 local function OnEquip(inst, owner)
-    -- 动画包中的 swap_weapon 是手持符号，格式与 mcw_lollipopstaff 一致。
+    -- 动画包中的 swap_weapon 是手持符号。
     owner.AnimState:OverrideSymbol("swap_object", name, "swap_weapon")
     owner.AnimState:Show("ARM_carry")
     owner.AnimState:Hide("ARM_normal")
@@ -354,7 +354,7 @@ local function fn()
     inst:AddComponent("useableitem") -- 右键切换锤、铲、捕虫、锄头功能
     inst.components.useableitem:SetOnUseFn(OnUse)
 
-    inst:AddComponent("spellcaster") -- 右键远程种植，复用 sorapick 的快速施法动作与范围
+    inst:AddComponent("spellcaster") -- 右键远程种植
     inst.components.spellcaster.canuseonpoint = true
     inst.components.spellcaster.quickcast = true
     inst.components.spellcaster:SetCanCastFn(CanPlantNineSeeds)

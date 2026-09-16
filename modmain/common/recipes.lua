@@ -80,6 +80,7 @@ local recipe_images = {
     kisaki_ether = { atlas = "images/inventoryimages/prefabs/kisaki_ether.xml", image = "kisaki_ether.tex" },
     kisaki_pack = { atlas = "images/inventoryimages/prefabs/kisaki_pack.xml", image = "kisaki_pack.tex" },
     kisaki_star_tool = { atlas = "images/inventoryimages/prefabs/kisaki_star_tool.xml", image = "kisaki_star_tool.tex" },
+    kisaki_multivariate_amulet = { atlas = "images/inventoryimages/prefabs/kisaki_multivariate_amulet.xml", image = "kisaki_multivariate_amulet.tex" },
     kisaki_talisman_aquarius = { atlas = "images/inventoryimages/prefabs/kisaki_constellation_talismans.xml", image = "kisaki_talisman_aquarius.tex" },
     kisaki_talisman_pisces = { atlas = "images/inventoryimages/prefabs/kisaki_constellation_talismans.xml", image = "kisaki_talisman_pisces.tex" },
     kisaki_talisman_aries = { atlas = "images/inventoryimages/prefabs/kisaki_constellation_talismans.xml", image = "kisaki_talisman_aries.tex" },
@@ -96,6 +97,18 @@ local recipe_images = {
 }
 
 local recipe_all = {
+    -- 神曲
+    {
+        recipe_name = 'kisaki_multivariate_amulet',
+        ingredients_data = {
+            goldnugget = 1,
+            kisaki_magic = 100,
+        },
+        tech = TECH.NONE,
+        isOriginalItem = false,
+        isShown = true,
+        filters = { 'KISAKI_TALISMAN' }
+    },
     -- 贝雅特丽齐之引
     {
         recipe_name = 'kisaki_star_tool',

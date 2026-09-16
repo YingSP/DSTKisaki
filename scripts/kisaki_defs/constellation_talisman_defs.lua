@@ -248,6 +248,7 @@ end
 
 local TALISMANS = {
     -- 星灵守护-水瓶
+    -- 1.25倍移速，8级暗影魔法等级，解锁炼金科技
     {
         name = "aquarius",
         tags = { "kisaki_aquarius" }, -- TODO，炼药科技
@@ -262,6 +263,7 @@ local TALISMANS = {
         end,
     },
     -- 星灵守护-双鱼
+    -- 每秒6点回SAN光环，玩家不受到潮湿度影响
     {
         name = "pisces",
         -- tags = {},
@@ -287,6 +289,7 @@ local TALISMANS = {
         end,
     },
     -- 星灵守护-白羊
+    -- 攻击回血回SAN，给被打的生物添加易伤
     {
         name = "aries",
         -- tags = {},
@@ -307,6 +310,7 @@ local TALISMANS = {
         end,
     },
     -- 星灵守护-金牛
+    -- 0.85倍移速，1.25倍攻击力，霸体
     {
         name = "taurus",
         tags = { "heavyarmor" },
@@ -331,6 +335,7 @@ local TALISMANS = {
         end,
     },
     -- 星灵守护-双子
+    -- 8级暗影魔法等级，攻击生成影分身保护玩家（继承人物物品攻击力）
     {
         name = "gemini",
         tags = { "switchable" },
@@ -350,6 +355,7 @@ local TALISMANS = {
         end
     },
     -- 星灵守护-巨蟹
+    -- 1.25倍移速，可以踏水和无视碰撞体积
     {
         name = "cancer",
         tags = {},
@@ -366,6 +372,7 @@ local TALISMANS = {
         end,
     },
     -- 星灵守护-狮子
+    -- 搬重物不减速，夜视
     {
         name = "leo",
         tags = { "kisaki_stronger" },
@@ -390,6 +397,7 @@ local TALISMANS = {
         end
     },
     -- 星灵守护-处女
+    -- 100%防水防雷，120保暖/隔热
     {
         name = "virgo",
         -- tags = {},
@@ -412,6 +420,7 @@ local TALISMANS = {
         end
     },
     -- 星灵守护-天秤
+    -- 玩家1.1倍易伤，攻击给对方也加易伤
     {
         name = "libra",
         -- tags = {},
@@ -434,6 +443,7 @@ local TALISMANS = {
         end,
     },
     -- 星灵守护-天蝎
+    -- 快速工作，谋杀小动物得两倍产物
     {
         name = "scorpio",
         tags = { "kisaki_scorpio" },
@@ -448,6 +458,7 @@ local TALISMANS = {
         end,
     },
     -- 星灵守护-射手
+    -- 远程攻击伤害1.25倍
     {
         name = "sagittarius",
         -- tags = {},
@@ -468,6 +479,7 @@ local TALISMANS = {
         end,
     },
     -- 星灵守护-摩羯
+    -- 攻击打湿对方
     {
         name = "capricorn",
         -- tags = {},
@@ -484,6 +496,7 @@ local TALISMANS = {
         end,
     },
     -- 星灵守护-群星
+    -- 继承所有护符的效果
     {
         name = "star",
         tags = { "kisaki_aquarius", "switchable", "kisaki_stronger", "kisaki_scorpio", "heavyarmor" },
@@ -503,20 +516,20 @@ local TALISMANS = {
                 end
                 -- 减伤
                 if owner.components.health and owner.components.health.kisaki_takedmg_mult then
-                    owner.components.health.kisaki_takedmg_mult:SetModifier(inst, 0.85, "kisaki_vulnerable_taurus")
+                    owner.components.health.kisaki_takedmg_mult:SetModifier(inst, 0.85, "kisaki_talisman_star")
                 end
                 -- 攻击组件
                 if owner.components.combat and owner.components.combat.kisaki_damagetype_mult then
-                    owner.components.combat.externaldamagetakenmultipliers:SetModifier(inst, 1.1, "kisaki_talisman_libra")
-                    owner.components.combat.kisaki_damagetype_mult:SetModifier(inst, 1.25, "kisaki_talisman_taurus")
+                    owner.components.combat.externaldamagetakenmultipliers:SetModifier(inst, 1.1, "kisaki_talisman_star")
+                    owner.components.combat.kisaki_damagetype_mult:SetModifier(inst, 1.25, "kisaki_talisman_star")
                 end
                 -- 远程攻击
                 if owner.kisaki_remote_damagetype_mult then
-                    owner.kisaki_remote_damagetype_mult:SetModifier(inst, 0.25, "kisaki_talisman_sagittarius")
+                    owner.kisaki_remote_damagetype_mult:SetModifier(inst, 0.25, "kisaki_talisman_star")
                 end
                 -- 霸体
                 if owner._kisaki_domination ~= nil then
-                    owner._kisaki_domination:RemoveModifier(inst, "kisaki_talisman_taurus")
+                    owner._kisaki_domination:SetModifier(inst, true, "kisaki_talisman_star")
                 end
                 -- 水上行走
                 CancerEquip(inst, owner)
@@ -540,20 +553,20 @@ local TALISMANS = {
                 end
                 -- 减伤
                 if owner.components.health and owner.components.health.kisaki_takedmg_mult then
-                    owner.components.health.kisaki_takedmg_mult:RemoveModifier(inst, "kisaki_vulnerable_taurus")
+                    owner.components.health.kisaki_takedmg_mult:RemoveModifier(inst, "kisaki_talisman_star")
                 end
                 -- 攻击组件
                 if owner.components.combat and owner.components.combat.kisaki_damagetype_mult then
-                    owner.components.combat.externaldamagetakenmultipliers:RemoveModifier(inst, "kisaki_talisman_libra")
-                    owner.components.combat.kisaki_damagetype_mult:RemoveModifier(inst, "kisaki_talisman_taurus")
+                    owner.components.combat.externaldamagetakenmultipliers:RemoveModifier(inst, "kisaki_talisman_star")
+                    owner.components.combat.kisaki_damagetype_mult:RemoveModifier(inst, "kisaki_talisman_star")
                 end
                 -- 远程攻击
                 if owner.kisaki_remote_damagetype_mult then
-                    owner.kisaki_remote_damagetype_mult:RemoveModifier(inst, "kisaki_talisman_sagittarius")
+                    owner.kisaki_remote_damagetype_mult:RemoveModifier(inst, "kisaki_talisman_star")
                 end
                 -- 霸体
                 if owner._kisaki_domination ~= nil then
-                    owner._kisaki_domination:SetModifier(inst, true, "kisaki_talisman_taurus")
+                    owner._kisaki_domination:RemoveModifier(inst, "kisaki_talisman_star")
                 end
                 -- 水上行走
                 CancerUnEquip(inst, owner)

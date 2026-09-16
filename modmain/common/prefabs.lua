@@ -2,6 +2,7 @@ PrefabFiles = {
     "kisaki",
     "kisaki_items",
     "kisaki_constellation_talismans",
+    "kisaki_multivariate_amulet",
     "kisaki_debuffs",
     "kisaki_shadow_protector",
     "kisaki_boxes",

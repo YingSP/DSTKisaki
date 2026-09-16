@@ -123,10 +123,10 @@ configuration_options =
 		name = "mod_recipes_share",
 		label = "模组通用物品制作共享",
 		options = {
-			{ description = "关闭", data = false, hover = "所有人都可以制作月社妃通用道具" },
-			{ description = "开启", data = true, hover = "只有月社妃可以制作模组相关内容" },
+			{ description = "关闭", data = false, hover = "只有月社妃可以制作模组相关内容" },
+			{ description = "开启", data = true, hover = "所有人都可以制作月社妃通用道具" },
 		},
-		default = true,
+		default = false,
 		hover = "角色配方共享"
 	},
 	makeTitle("角色基础属性设置"),
@@ -354,7 +354,7 @@ configuration_options =
 			{ description = "关闭", data = false, hover = "角色不删除诅咒物" },
 			{ description = "开启", data = true, hover = "角色自动删除诅咒物" }
 		},
-		default = true,
+		default = false,
 		hover = "月社妃是否自动删除诅咒物"
 	},
 	{

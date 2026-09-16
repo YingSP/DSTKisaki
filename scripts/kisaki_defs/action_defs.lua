@@ -1,3 +1,5 @@
+local amuletutil = require("utils/amuletutil")
+
 local function MakeRangeCheckFn(range)
     return function(doer, target)
         if target then
@@ -13,8 +15,137 @@ local function noentcheckfn(pt)
         #TheSim:FindEntities(pt.x, pt.y, pt.z, 1, nil, NOTENTCHECK_CANT_TAGS) == 0
 end
 
+-- 判断是否是护符，拒绝带护甲的装备（即使他是护符）
+local function IsStorableMultivariateAmulet(item, use_replica)
+    return amuletutil.IsStorableAmulet(item, use_replica)
+end
+-- 获取装备中的融合护符
+local function GetMultivariateAmulet(inventory)
+    return amuletutil.GetEquippedOuter(inventory)
+end
+
 -- 自定义动作
 local actions = {
+    {
+        id = "KISAKIEQUIP", -- 右键将护符收纳进薪火。
+        str = STRINGS.KISAKI_ACTION.KISAKIEQUIP,
+        fn = function(act)
+            local doer = act.doer
+            local item = act.invobject
+            local inventory = doer ~= nil and doer.components.inventory or nil
+            local outer = GetMultivariateAmulet(inventory)
+            local container = outer ~= nil and outer.components.container or nil
+
+            if container == nil or inventory == nil
+                or not IsStorableMultivariateAmulet(item, false)
+            then
+                return false
+            end
+
+            -- 解析落位格：同名护符所在格 > 最靠前的空格 > 最后一格（挤出来）。
+            local target_slot = amuletutil.GetStoreTargetSlot(container, item)
+            if target_slot == nil then
+                return false
+            end
+
+            -- 先取出目标格上原有的护符，让格子空出来。
+            local replaced = container:GetItemInSlot(target_slot)
+            if replaced ~= nil then
+                container:RemoveItemBySlot(target_slot)
+                -- 清掉来源信息，否则 Inventory:GiveItem 会把这个被换出的旧物又塞回原来容器
+                replaced.prevcontainer = nil
+                replaced.prevslot = nil
+            end
+
+            -- 必须先 RemoveFromOwner 摘出来，否则玩家背包里仍保留一份，造成复制。
+            local moved = item.components.inventoryitem:RemoveFromOwner(true) or item
+
+            if container:GiveItem(moved, target_slot) then
+                if replaced ~= nil and not inventory:GiveItem(replaced) then
+                    -- 旧护符背包放不下就地丢出，避免凭空消失。
+                    inventory:DropItem(replaced, true, true)
+                end
+                return true
+            end
+
+            -- 理论上 itemtest 已保证不会失败；若因外部 Mod 临时拒绝，双方各自回滚。
+            if replaced ~= nil then
+                container:GiveItem(replaced, target_slot)
+            end
+            inventory:GiveItem(moved)
+            return false
+        end,
+        state = "doaction",
+        actiondata = {
+            priority = 1,
+            rmb = true, -- 仅右键触发，不用 checkfn 的 right 参数（该参数在部分调用路径下为 nil）
+            instant = true,
+            mount_valid = true,
+            encumbered_valid = true,
+            floating_valid = true,
+            paused_valid = true,
+        },
+    },
+    {
+        id = "KISAKIUNEQUIP", -- 右键把护符从薪火中取出到身上。
+        str = STRINGS.KISAKI_ACTION.KISAKIUNEQUIP,
+        fn = function(act)
+            local doer = act.doer
+            local item = act.invobject
+            local inventory = doer ~= nil and doer.components.inventory or nil
+            if inventory == nil or item == nil then
+                return false
+            end
+
+            -- 判定走 tag（与 checkfn 同一套规则）。
+            if not amuletutil.IsStoredInAmulet(item) then
+                return false
+            end
+            local itemdata = item.components.inventoryitem
+            local outer = itemdata ~= nil and itemdata.owner or nil
+            if not amuletutil.IsOuterAmulet(outer) or outer.components.container == nil then
+                return false
+            end
+
+            -- 先拿下来
+            local removed = outer.components.container:RemoveItem(item, true) or item
+
+            -- 这里清掉来源信息，强制 GiveItem 走正常的背包/掉落流程。
+            removed.prevcontainer = nil
+            removed.prevslot = nil
+
+            if removed.components.equippable ~= nil
+                and removed.components.equippable:ShouldPreventUnequipping()
+            then
+                -- 不可卸下的护符放回容器，避免卡在中间状态。
+                outer.components.container:GiveItem(removed)
+                return false
+            end
+
+            if removed.components.inventoryitem ~= nil
+                and removed.components.inventoryitem.cangoincontainer
+                and not GetGameModeProperty("non_item_equips")
+            then
+                if not inventory:GiveItem(removed) then
+                    -- 背包塞不下时兜底丢在地上，避免物品凭空消失。
+                    inventory:DropItem(removed, true, true)
+                end
+            else
+                inventory:DropItem(removed, true, true)
+            end
+            return true
+        end,
+        state = "doaction",
+        actiondata = {
+            priority = 1,
+            rmb = true,
+            instant = true,
+            mount_valid = true,
+            encumbered_valid = true,
+            floating_valid = true,
+            paused_valid = true,
+        },
+    },
     {
         id = "OPENORCLOSEAMULETWITHRIGHT", -- 右键开关护符功能
         str = STRINGS.KISAKI_ACTION.OPENORCLOSEAMULETWITHRIGHT,
@@ -31,7 +162,7 @@ local actions = {
         end,
         state = "doaction",     -- sg
         actiondata = {
-            priority = 1,       -- 优先级
+            priority = 3,       -- 优先级
             instant = true,     -- 是否立即触发
             mount_valid = true, -- 骑牛可触发
         },
@@ -251,6 +382,44 @@ local actions = {
 local component_actions = {
     {
         type = "INVENTORY",
+        component = "equippable",
+        data = {
+            {
+                action = "KISAKIEQUIP",
+                checkfn = function(inst, doer, actionlist, right)
+                    -- 基础检查
+                    if inst == nil
+                        or inst.prefab == "kisaki_multivariate_amulet"
+                        or not IsStorableMultivariateAmulet(inst, true)
+                        or doer == nil
+                        or doer.replica.inventory == nil
+                    then
+                        return false
+                    end
+                    -- 已被收纳的物品显示“卸下”，不再显示“装备”，两者互斥。
+                    if amuletutil.IsStoredInAmulet(inst) then
+                        return false
+                    end
+                    -- 装备着融合护符才走这条路。
+                    local outer = GetMultivariateAmulet(doer.replica.inventory)
+                    return outer ~= nil and outer.replica.container ~= nil
+                end,
+            },
+            {
+                action = "KISAKIUNEQUIP",
+                checkfn = function(inst, doer, actionlist, right)
+                    -- 只要物品被融合护符收纳着就能取出
+                    return inst ~= nil
+                        and amuletutil.IsStoredInAmulet(inst)
+                        and doer ~= nil
+                        and doer.replica.inventory ~= nil
+                        and GetMultivariateAmulet(doer.replica.inventory) ~= nil
+                end,
+            },
+        },
+    },
+    {
+        type = "INVENTORY",
         component = "inventoryitem",
         data = {
             {
@@ -263,7 +432,8 @@ local component_actions = {
                 action = "OPENORCLOSEAMULETWITHRIGHT", -- 右键开关护符功能
                 checkfn = function(inst, doer, actionlist, right)
                     return inst and inst:HasTag("kisaki_amulet") and inst:HasTag("switchable") and
-                        inst.replica.equippable ~= nil and inst.replica.equippable:IsEquipped() and
+                        inst.replica.equippable ~= nil and
+                        (inst.replica.equippable:IsEquipped() or amuletutil.IsStoredInAmulet(inst)) and
                         not inst:HasTag("usesdepleted")
                 end,
             },

@@ -43,7 +43,7 @@ local kisaki_debuffs_def = {
     },
     {
         prefab = "kisaki_vulnerable_libra",
-        name = "身体朽败-天蝎", --buff名称
+        name = "身体朽败-天秤", --buff名称
         time = 5, --持续时间（s）
         OnAttached = function(inst, target)
             -- Buff被施加时执行方法

@@ -11,7 +11,7 @@ local FIRST_DAPPERNESS_MULT = 0.1
 local FIRST_AURA_MULT = 0.1
 local MOISTURE_SANITY_PENALTY_MAX = -4 -- 角色因为潮湿最大的减魔法光环
 local PLAYER_ADD_SPEED = 400 / 480     -- 玩家在周围存在时，给予的回魔法BUFF
-local SLEEPING_ADD_SPEED = 100 / 60    -- 玩家在周围存在时，给予的回魔法BUFF
+local SLEEPING_ADD_SPEED = 600 / 60    -- 玩家在睡觉时，给予的回魔法BUFF
 local PLAYER_RANGE = 10                -- 查找玩家的距离
 ----------------------------------------------------------------------------任务-------------------------------------------------------------------------------
 

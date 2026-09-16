@@ -2,6 +2,7 @@ local avatar_name = "kisaki"
 local log = require("utils/kisakilogger")
 local SourceModifierList = require("util/sourcemodifierlist")
 local SpDamageUtil = require("components/spdamageutil")
+local amuletutil = require("utils/amuletutil")
 local ImageButton = require "widgets/imagebutton"
 local collect_all_item_scope = TUNING.KISAKI_COLLECT_ALL_ITEM_SCOPE
 
@@ -563,6 +564,25 @@ AddComponentPostInit("inventory", function(self)
         end
         return returnvalue
     end
+
+    -- 给融合护符做tag适配
+    local OldEquipHasTag = self.EquipHasTag
+    self.EquipHasTag = function(self, tag, ...)
+        if OldEquipHasTag(self, tag, ...) then
+            return true
+        end
+        return amuletutil.EquippedOuterHasTag(self, tag)
+    end
+end)
+-- 客户端副本同样 hook
+AddClassPostConstruct("components/inventory_replica", function(self)
+    local OldEquipHasTag = self.EquipHasTag
+    self.EquipHasTag = function(self, tag, ...)
+        if OldEquipHasTag(self, tag, ...) then
+            return true
+        end
+        return amuletutil.EquippedOuterHasTag(self, tag)
+    end
 end)
 
 -- 修改容器组件
@@ -874,6 +894,10 @@ AddComponentPostInit("container_proxy", function(ContainerProxy)
     if ContainerProxy.inst and not ContainerProxy.inst:HasTag("_container_proxy") then
         ContainerProxy.inst:AddTag("_container_proxy")
     end
+end)
+-- 修改防御组件，用于融合护符的收纳判定
+AddComponentPostInit("armor", function(self)
+    self.inst:AddTag("armor")
 end)
 
 -- 修改采集组件

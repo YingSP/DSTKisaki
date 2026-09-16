@@ -1,5 +1,6 @@
 local containers = require "containers"
 local log = require("utils/kisakilogger")
+local amuletutil = require("utils/amuletutil")
 local containers_params = containers.params
 local POCKETDIMENSIONCONTAINER_DEFS = require("prefabs/pocketdimensioncontainer_defs").POCKETDIMENSIONCONTAINER_DEFS
 
@@ -2374,6 +2375,93 @@ end
 
 copyChestUI("kisaki_library_box", "kisaki_library_box_chest")
 
+-- 薪火
+containers_params.kisaki_multivariate_amulet = {
+    widget = {
+        slotpos = {},
+        slotbg = {},
+        animbank = "ui_kisaki_container_3x2",
+        animbuild = "ui_kisaki_container_3x2",
+        pos = Vector3(0, 50, 0),
+        -- 面板挂载在手部装备上方的 hand_inv 锚点（原版 type = "hand_inv"），
+        -- 但护符实际装在护符栏（未启用扩展装备栏时是身体栏），所以这里动态算出目标槽相对手部槽的横向位移，把面板挪过去。返回 nil 时回退到上面的 pos。
+        posfn = function(container, doer)
+            if doer == nil or doer.HUD == nil then
+                return nil
+            end
+            local inv = doer.HUD.controls.inv
+            if inv == nil then
+                return nil
+            end
+
+            -- 无论是否启用扩展装备栏、装备栏排布如何变化都能对上。
+            local target = inv.equip[EQUIPSLOTS.NECK or EQUIPSLOTS.BODY]
+            local hand = inv.equip[EQUIPSLOTS.HANDS]
+
+            -- 这里安排一次延迟刷新，等装备栏就绪后按正确偏移重新定位。
+            if target == nil or hand == nil then
+                if container._kisaki_pos_retry == nil then
+                    -- 延迟 0.1 秒而非 0：装备栏重建同样排在 DoTaskInTime(0) 队列里，
+                    -- 且可能注册在本任务之后（进游戏时容器先在 AttachOpener 里排队）。
+                    -- 多等一会儿能确保拿到重建后的真实坐标，只触发一次，玩家无感。
+                    container._kisaki_pos_retry = container:DoTaskInTime(0.1, function()
+                        container._kisaki_pos_retry = nil
+                        local hud = doer ~= nil and doer.HUD or nil
+                        local widget = hud ~= nil and hud.controls.containers[container] or nil
+                        -- Widget 没有 IsValid，有效性要看它底层的实体。
+                        if widget ~= nil and widget.inst ~= nil and widget.inst:IsValid() then
+                            widget:RefreshPosition()
+                        end
+                    end)
+                end
+                return nil
+            end
+
+            -- 装备槽挂在 toprow 下，与 hand_inv 同属 root 坐标系，x 可直接相减。
+            local dx = target:GetPosition().x - hand:GetPosition().x
+            -- hand_inv 自身带 1.5 倍缩放，会把偏移一并放大，所以这里要除掉它换算回实际位移。
+            local sx = 1.5
+            if inv.hand_inv ~= nil then
+                local hx = inv.hand_inv.inst.UITransform:GetScale()
+                if hx ~= nil and hx ~= 0 then
+                    sx = hx
+                end
+            end
+            return Vector3(dx / sx, 50, 0)
+        end,
+    },
+    acceptsstacks = false,
+    type = "hand_inv",
+    excludefromcrafting = true,
+}
+
+local MULTIVARIATE_AMULET_SLOT_START = 44
+local MULTIVARIATE_AMULET_SLOT_DIFF = 72
+local MULTIVARIATE_AMULET_SLOT_BG = {
+    image = "container_ui_amulet.tex",
+    atlas = "images/inventoryimages/widget/kisaki_container_ui.xml"
+}
+for row = 0, 1 do
+    for col = 0, 2 do
+        table.insert(containers_params.kisaki_multivariate_amulet.widget.slotpos,
+            Vector3((col - 1) * (MULTIVARIATE_AMULET_SLOT_DIFF + 5) + 3,
+                MULTIVARIATE_AMULET_SLOT_START - row * MULTIVARIATE_AMULET_SLOT_DIFF, 0))
+        table.insert(containers_params.kisaki_multivariate_amulet.widget.slotbg,
+            MULTIVARIATE_AMULET_SLOT_BG)
+    end
+end
+
+function containers_params.kisaki_multivariate_amulet.itemtestfn(container, item, slot)
+    -- 判定规则与虚拟装备激活共用 utils/amuletutil，避免出现“能放进容器但激活时被另一套更严的校验静默拒绝”的分歧。
+    if slot == nil then
+        -- 没指定位置会自动寻位：这里只回答“物品本身能不能进这个容器”。
+        return amuletutil.IsStorableAmulet(item)
+    end
+    -- 拖拽落点判定：有同名护符时只能落到同名那一格（替换它，避免同名并存），
+    -- 没有同名时空格与任意占用格都可落（把里面那件替换出来）。，
+    return amuletutil.CanStoreInSlot(container, item, slot)
+end
+
 ------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- 夜莺与黄昏之诗
@@ -2670,3 +2758,5 @@ end
 for k, v in pairs(containers_params) do
     containers.MAXITEMSLOTS = math.max(containers.MAXITEMSLOTS, v.widget.slotpos ~= nil and #v.widget.slotpos or 0)
 end
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------

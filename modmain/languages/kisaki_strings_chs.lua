@@ -62,6 +62,8 @@ STRINGS.CHARACTERS.KISAKI = {
 --------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 STRINGS.KISAKI_ACTION = {
+    KISAKIEQUIP = "装备",
+    KISAKIUNEQUIP = "卸下",
     OPENORCLOSEAMULETWITHRIGHT = "开关",
     KISAKITRADER = "给予",
     RECYCLE = "回收",
@@ -145,6 +147,11 @@ local MSG = {
         name = "星灵守护-水瓶",
         desc = "关于炼药的知识，它知道更多",
         recipe_desc = "来自星空的记忆"
+    },
+    kisaki_multivariate_amulet = {
+        name = "神曲",
+        desc = "万木之心的凝固泪滴。",
+        recipe_desc = "万木之心的凝固泪滴。"
     },
     kisaki_talisman_pisces = {
         name = "星灵守护-双鱼",
