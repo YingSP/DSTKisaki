@@ -30,6 +30,7 @@ AddMinimapAtlas("images/inventoryimages/prefabs/kisaki_library_box.xml")
 AddMinimapAtlas("images/inventoryimages/prefabs/kisaki_space_chest.xml")
 AddMinimapAtlas("images/inventoryimages/prefabs/kisaki_yog_key.xml")
 AddMinimapAtlas("images/inventoryimages/prefabs/kisaki_star_tool.xml")
+AddMinimapAtlas("images/inventoryimages/prefabs/kisaki_base_tool.xml")
 
 local widgets = {
     "kisaki_magic",

@@ -4,6 +4,7 @@ local SourceModifierList = require("util/sourcemodifierlist")
 local SpDamageUtil = require("components/spdamageutil")
 local amuletutil = require("utils/amuletutil")
 local ImageButton = require "widgets/imagebutton"
+local Widget = require "widgets/widget"
 local collect_all_item_scope = TUNING.KISAKI_COLLECT_ALL_ITEM_SCOPE
 
 ----------------------------------------------------------------------------组件通信----------------------------------------------------------------------------
@@ -168,6 +169,15 @@ end)
 
 AddClassPostConstruct("screens/playerhud", function(self)
     local ContainerWidget = require("widgets/containerwidget")
+    -- 模组容器的专用挂载根节点：和挂在根节点同视觉效果，但是不会因为打开法术书就关闭容器UI
+    local function GetKisakiContainerRoot(self)
+        if self.kisaki_container_root == nil then
+            local root = Widget("kisaki_container_root")
+            self.controls.containerroot:AddChild(root)
+            self.kisaki_container_root = root
+        end
+        return self.kisaki_container_root
+    end
     local function OpenKisakiWidget(self, container, side)
         local containerwidget = ContainerWidget(self.owner)
         -- 通过类型获取UI的父节点
@@ -179,7 +189,7 @@ AddClassPostConstruct("screens/playerhud", function(self)
             local _type = _container and _container.type or nil
             parent =
                 (_type == "kisaki_portable_box" and self.controls.inv.hand_inv) or
-                self.controls.containerroot
+                GetKisakiContainerRoot(self)
         end
 
         parent:AddChild(containerwidget)
@@ -194,8 +204,15 @@ AddClassPostConstruct("screens/playerhud", function(self)
         if container == nil then
             return
         end
+        local _container = container.replica.container
+        local _type = _container and _container.type or nil
         -- 模组的特殊容器UI走这边逻辑
         if container:HasTag("kisaki_box_special_weight") then
+            OpenKisakiWidget(self, container, side)
+            return
+        end
+        -- 模组容器（type 以 kisaki 开头）统一挂载到专用根节点
+        if _type ~= nil and string.sub(_type, 1, 6) == "kisaki" then
             OpenKisakiWidget(self, container, side)
             return
         end
@@ -900,6 +917,18 @@ AddComponentPostInit("armor", function(self)
     self.inst:AddTag("armor")
 end)
 
+-- 修改钓竿组件：让模组工具免疫“鱼把钓竿拖走”。
+AddComponentPostInit("fishingrod", function(self)
+    local OldHook = self.Hook
+    self.Hook = function(self, ...)
+        local ret = OldHook(self, ...)
+        if self.inst ~= nil and self.inst:HasTag("kisaki_immune_rod_loss") then
+            self:CancelFishTask()
+        end
+        return ret
+    end
+end)
+
 -- 修改采集组件
 AddComponentPostInit("pickable", function(Pickable)
     local function OnRegen(inst)
@@ -1199,6 +1228,25 @@ local function SetOmmateumVision(inst)
     end
 end
 
+-- 法杖（旅/渡海之诗）卸下/切换善后：
+-- 原版 playercontroller 的 OnEquip/OnUnequip 遇到带spellbook 的圈来源会提前返回、跳过瞄准圈清理，而法杖的圈是装备期间的常驻鼠标圈。
+-- 注意客户端直接切换手部物品时槽位从 A 直接变 B、不会推送 unequip，因此两个事件都要监听。
+local function StaffReticuleClean(player, data, event)
+    if data == nil or data.eslot ~= EQUIPSLOTS.HANDS then
+        return
+    end
+    local playercontroller = player.components.playercontroller
+    local reticule = playercontroller ~= nil and playercontroller.reticule or nil
+    if reticule == nil or reticule.inst == nil or reticule.inst.components.spellbook == nil then
+        return -- 圈来源不是带 spellbook 的物品（原版能自行处理）
+    end
+    if data.item ~= nil and data.item.components.reticule == reticule then
+        return -- 本次装备的就是当前圈来源（同一件法杖）
+    end
+    playercontroller:RefreshReticule(data.item)
+    log.debug(string.format("杖圈调试: %s 已触发清理 eslot=%s", event, tostring(data.eslot)))
+end
+
 AddPlayerPostInit(function(inst)
     -- 删除生成暗影守护者时的转圈圈特效
     if inst.components.petleash ~= nil then
@@ -1212,6 +1260,9 @@ AddPlayerPostInit(function(inst)
     -- 添加夜视监听
     inst._kisaki_nightvision = net_bool(inst.GUID, "kisaki_nightvision._enabled", "kisaki_nightvision_enableddirty")
     inst:ListenForEvent("kisaki_nightvision_enableddirty", SetOmmateumVision)
+    -- 法杖卸下/切换善后
+    inst:ListenForEvent("equip", function(player, data) StaffReticuleClean(player, data, "equip") end)
+    inst:ListenForEvent("unequip", function(player, data) StaffReticuleClean(player, data, "unequip") end)
     -------------------------------------------------------------------服务器部分修改--------------------------------------------------------------
     if TheWorld.ismastersim then
         -- 霸体

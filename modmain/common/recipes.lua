@@ -79,7 +79,9 @@ local recipe_images = {
     kisaki_magic = { atlas = "images/inventoryimages/widget/kisaki_magic.xml", image = "kisaki_magic.tex" },
     kisaki_ether = { atlas = "images/inventoryimages/prefabs/kisaki_ether.xml", image = "kisaki_ether.tex" },
     kisaki_pack = { atlas = "images/inventoryimages/prefabs/kisaki_pack.xml", image = "kisaki_pack.tex" },
+    kisaki_base_tool = { atlas = "images/inventoryimages/prefabs/kisaki_base_tool.xml", image = "kisaki_base_tool.tex" },
     kisaki_star_tool = { atlas = "images/inventoryimages/prefabs/kisaki_star_tool.xml", image = "kisaki_star_tool.tex" },
+    kisaki_magic_staff = { atlas = "images/inventoryimages/prefabs/kisaki_magic_staff.xml", image = "kisaki_magic_staff.tex" },
     kisaki_multivariate_amulet = { atlas = "images/inventoryimages/prefabs/kisaki_multivariate_amulet.xml", image = "kisaki_multivariate_amulet.tex" },
     kisaki_talisman_aquarius = { atlas = "images/inventoryimages/prefabs/kisaki_constellation_talismans.xml", image = "kisaki_talisman_aquarius.tex" },
     kisaki_talisman_pisces = { atlas = "images/inventoryimages/prefabs/kisaki_constellation_talismans.xml", image = "kisaki_talisman_pisces.tex" },
@@ -97,26 +99,42 @@ local recipe_images = {
 }
 
 local recipe_all = {
-    -- 神曲
+    -- 《新生》
     {
-        recipe_name = 'kisaki_multivariate_amulet',
+        recipe_name = 'kisaki_base_tool',
         ingredients_data = {
-            goldnugget = 1,
-            kisaki_magic = 100,
+            goldnugget = 6,
+            twigs = 18,
+            cutgrass = 10,
+            silk = 4,
         },
         tech = TECH.NONE,
         isOriginalItem = false,
         isShown = true,
-        filters = { 'KISAKI_TALISMAN' }
+        filters = { 'KISAKI_CHARACTER' }
     },
-    -- 贝雅特丽齐之引
+    -- 《神曲》
     {
         recipe_name = 'kisaki_star_tool',
         ingredients_data = {
-            twigs = 30,
-            goldnugget = 20,
+            kisaki_base_tool = 1,
+            cane = 1,
+            thulecite = 10,
+            goldnugget = 40,
             kisaki_magic = 500,
-            silk = 5,
+        },
+        tech = TECH.NONE,
+        isOriginalItem = false,
+        isShown = true,
+        filters = { 'KISAKI_CHARACTER' }
+    },
+    -- 旅
+    {
+        recipe_name = 'kisaki_magic_staff',
+        ingredients_data = {
+            thulecite = 20,
+            nightmarefuel = 40,
+            kisaki_magic = 500,
         },
         tech = TECH.NONE,
         isOriginalItem = false,
@@ -182,6 +200,19 @@ local recipe_all = {
         isOriginalItem = false,
         isShown = true,
         filters = { 'KISAKI_CHARACTER' }
+    },
+    -- 薪火
+    {
+        recipe_name = 'kisaki_multivariate_amulet',
+        ingredients_data = {
+            goldnugget = 10,
+            nightmarefuel = 10,
+            kisaki_magic = 200,
+        },
+        tech = TECH.NONE,
+        isOriginalItem = false,
+        isShown = true,
+        filters = { 'KISAKI_TALISMAN' }
     },
     -- 星灵守护-水瓶
     {
@@ -378,7 +409,6 @@ local recipe_all = {
             silk = 4,
             kisaki_magic = 160,
         },
-        builder_tag = avatar_name,
         tech = TECH.NONE,
         isOriginalItem = false,
         isShown = true,
@@ -391,7 +421,6 @@ local recipe_all = {
             livinglog = 4,
             kisaki_magic = 100,
         },
-        builder_tag = avatar_name,
         tech = TECH.NONE,
         isOriginalItem = false,
         isShown = true,
@@ -404,7 +433,6 @@ local recipe_all = {
             boards = 10,
             kisaki_magic = 1000,
         },
-        builder_tag = avatar_name,
         tech = TECH.NONE,
         isOriginalItem = false,
         isShown = true,
@@ -422,7 +450,6 @@ local recipe_all = {
             min_spacing = 3,
             placer = "kisaki_space_chest_placer",
         },
-        builder_tag = avatar_name,
         tech = TECH.NONE,
         isOriginalItem = false,
         isShown = true,
@@ -435,7 +462,6 @@ local recipe_all = {
             purplegem = 1,
             goldnugget = 99,
         },
-        builder_tag = avatar_name,
         tech = TECH.NONE,
         isOriginalItem = false,
         isShown = true,

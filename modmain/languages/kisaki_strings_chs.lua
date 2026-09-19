@@ -108,6 +108,45 @@ STRINGS.KISAKI_ACTION = {
 -- 万能工具远程种植使用原版 CASTSPELL 动作，补充其右键动作文本。
 STRINGS.ACTIONS.CASTSPELL.KISAKISTARPLANT = "种植"
 
+-- 旅各状态的右键动作文本（CASTSPELL 的 strfn 按状态标签返回对应子键）
+STRINGS.ACTIONS.CASTSPELL.KISAKI_IGNITE = "点燃"
+STRINGS.ACTIONS.CASTSPELL.KISAKI_FREEZE = "冰冻"
+STRINGS.ACTIONS.CASTSPELL.KISAKI_TELEPORT = "传送"
+STRINGS.ACTIONS.CASTSPELL.KISAKI_DECONSTRUCT = "拆解"
+STRINGS.ACTIONS.CASTSPELL.KISAKI_BLINK = "瞬移"
+STRINGS.ACTIONS.CASTSPELL.KISAKI_STARCALL = "唤星"
+STRINGS.ACTIONS.CASTSPELL.KISAKI_MOONCALL = "唤月"
+STRINGS.ACTIONS.CASTSPELL.KISAKI_MOONFALL = "月陨"
+STRINGS.ACTIONS.CASTSPELL.KISAKI_SHADOWFALL = "影默"
+
+----------------------------------------------------------------------------------------------
+
+-- 旅法杖：状态名与全部提示文本
+STRINGS.KISAKI_MAGIC_STAFF = {
+    -- 法术书轮盘中的状态名
+    MODES = {
+        normal = "普通",
+        ignite = "点燃",
+        freeze = "冰冻",
+        teleport = "传送",
+        deconstruct = "拆解",
+        blink = "瞬移",
+        starcall = "唤星",
+        mooncall = "唤月",
+        moonfall = "月陨",
+        shadowfall = "影默",
+    },
+    SWITCH_TO = "已切换至%s状态。", -- 切换状态成功
+    MODE_LOCKED = "%s状态未解锁。", -- 选择未解锁的状态
+    UPGRADE_DONE = "「%s」状态已解锁！", -- 某项升级喂满
+    UPGRADE_PROGRESS = "%s升级进度（%d/%d）", -- 升级进行中
+    NEED_MORE = "旅升级需要：\n%s", -- 给予无效物品时列出还缺的材料
+    UPGRADE_FULL = "旅已臻圆满，进化为渡海之诗！", -- 全部升级完成进化
+    TOO_FAR = "距离太远了。", -- 施法距离不足
+    CANT_IGNITE = "这个点不着。", -- 点燃目标无效
+    NOTHING_TO_EXTINGUISH = "这个冻不住。", -- 灭火状态没有可扑灭的目标
+}
+
 --------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 STRINGS.UI.CRAFTING_FILTERS.KISAKI_TALISMAN = "妃的守护命符"
@@ -143,15 +182,34 @@ local MSG = {
         desc = "能量的集合体，好像有些特殊的作用",
         recipe_desc = "有些东西装进容器里才能用"
     },
+    kisaki_base_tool = {
+        name = "《新生》",
+        desc = "我们于此汇聚，获得新生。",
+        recipe_desc = "我们于此汇聚，获得新生。",
+    },
+    kisaki_star_tool = {
+        name = "《神曲》",
+        desc = "贝雅特丽齐的歌声，指引穿越九重天穹。",
+        recipe_desc = "贝雅特丽齐的歌声，指引穿越九重天穹。"
+    },
+    kisaki_magic_staff = {
+        name = "旅",
+        desc = "旅途的开始，还是轮回的休憩",
+        recipe_desc = "旅途的开始，还是轮回的休憩",
+    },
+    kisaki_magic_staff_max = {
+        name = "渡海之诗",
+        desc = "山海已渡，诗篇至此终章。",
+    },
+    kisaki_multivariate_amulet = {
+        name = "薪火",
+        desc = "薪火相传，生生不息。",
+        recipe_desc = "薪火相传，生生不息。"
+    },
     kisaki_talisman_aquarius = {
         name = "星灵守护-水瓶",
         desc = "关于炼药的知识，它知道更多",
         recipe_desc = "来自星空的记忆"
-    },
-    kisaki_multivariate_amulet = {
-        name = "神曲",
-        desc = "万木之心的凝固泪滴。",
-        recipe_desc = "万木之心的凝固泪滴。"
     },
     kisaki_talisman_pisces = {
         name = "星灵守护-双鱼",
@@ -248,6 +306,11 @@ local MSG = {
         desc = "无论悲剧还是喜剧，故事都终将结束",
         recipe_desc = "无论悲剧还是喜剧，故事都终将结束"
     },
+    kisaki_space_chest_child = {
+        name = "夜莺与黄昏之诗",
+        desc = "无论悲剧还是喜剧，故事都终将结束",
+        recipe_desc = "无论悲剧还是喜剧，故事都终将结束"
+    },
     kisaki_yog_key = {
         name = "门之钥",
         desc = "诸界之扉的银白钥匙，通晓万物归一者。",
@@ -257,11 +320,6 @@ local MSG = {
         name = "浮生绘羽",
         desc = "世间万物，都将在他笔下复现",
         recipe_desc = "世间万物，都将在他笔下复现"
-    },
-    kisaki_star_tool = {
-        name = "贝雅特丽齐之引",
-        desc = "星辉为引，渡人穿越九重天穹。",
-        recipe_desc = "星辉为引，渡人穿越九重天穹。"
     },
     kisaki_shadow_protector_gemini = {
         name = "暗影守护者",

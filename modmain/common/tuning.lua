@@ -89,6 +89,28 @@ TUNING.CURSELIST = {
 	["cursed_monkey_token"] = true
 }                                   --  会自动删除的诅咒列表
 TUNING.KISAKI_GOST_MOVE_SPEED = 1.8 --  角色死亡后移速倍率
+-- 《新生》基础的工具列表与效率
+TUNING.BASE_BASE_ACTIONS = {
+	{ action = ACTIONS.CHOP, effectiveness = 1 },
+	{ action = ACTIONS.MINE, effectiveness = 1 },
+}
+-- 《新生》可开关的工具列表与效率
+TUNING.BASE_AUXILIARY_ACTIONS = {
+	{ action = ACTIONS.HAMMER },
+	{ action = ACTIONS.DIG },
+	{ action = ACTIONS.NET },
+}
+-- 《神曲》基础的工具列表与效率
+TUNING.STAR_BASE_ACTIONS = {
+	{ action = ACTIONS.CHOP, effectiveness = 10 },
+	{ action = ACTIONS.MINE, effectiveness = 12 },
+}
+-- 《神曲》可开关的工具列表与效率
+TUNING.STAR_AUXILIARY_ACTIONS = {
+	{ action = ACTIONS.HAMMER },
+	{ action = ACTIONS.DIG,   effectiveness = 10 },
+	{ action = ACTIONS.NET },
+}
 -- 升级魔法盒的物品
 TUNING.KISAKI_MAGIC_BOX_FUNCTION_LIST = {
 	-- 采集
@@ -323,9 +345,13 @@ table.insert(TUNING.KISAKI_SPACE_CHEST_ITEMS, "kisaki_library_box")
 
 -- 初始物品
 TUNING.KISAKI_STARTING_ITEMS = {
-	papyrus = {
-		num = 4,
-		moditem = false
+	kisaki_multivariate_amulet = {
+		num = 1,
+		moditem = true,
+	},
+	kisaki_magic_staff = {
+		num = 1,
+		moditem = true,
 	}
 	-- ['goldnugget'] = {
 	-- 	num = 4, -- 数量
@@ -337,8 +363,8 @@ TUNING.KISAKI_STARTING_ITEMS = {
 TUNING.GAMEMODE_STARTING_ITEMS.DEFAULT.KISAKI = {}
 for k, v in pairs(TUNING.KISAKI_STARTING_ITEMS) do
 	if v.moditem then
-		TUNING.STARTING_ITEM_IMAGE_OVERRIDE[v] = {
-			atlas = v.img and v.img.atlas or "images/inventoryimages/" .. k .. ".xml",
+		TUNING.STARTING_ITEM_IMAGE_OVERRIDE[k] = {
+			atlas = v.img and v.img.atlas or "images/inventoryimages/prefabs/" .. k .. ".xml",
 			image = v.img and v.img.image or k .. ".tex",
 		}
 	end

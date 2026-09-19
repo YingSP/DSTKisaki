@@ -332,9 +332,38 @@ function KisakiMakeWidgetMovable(s, name, pos, data)
     s:StartUpdating()
 end
 
+-- 发光物品通过判断周围光亮自行发光熄灯
+local LIGHT_TURN_ON, LIGHT_TURN_OFF = 0.6, 0.3
+local function KisakiStartDayNightLight(inst, shouldlight)
+    inst.entity:AddLightWatcher()
+    inst.lastblink = GetTime()
+    inst:DoPeriodicTask(0.3, function(i)
+        if shouldlight ~= nil and not shouldlight(i) then
+            i.Light:Enable(false)
+            return
+        end
+        local t = GetTime()
+        local x, y, z = i.Transform:GetWorldPosition()
+        local cansee = (TheSim:GetLightAtPoint(x, y, z) + TheSim:GetLightAtPoint(x + 8, y, z)
+            + TheSim:GetLightAtPoint(x - 8, y, z) + TheSim:GetLightAtPoint(x, y, z + 8)
+            + TheSim:GetLightAtPoint(x, y, z - 8)) / 5 - (i.Light:IsEnabled() and 0.7 or 0)
+        if i.Light:IsEnabled() then
+            -- 已亮：环境光变亮就延迟熄灭
+            if cansee > LIGHT_TURN_OFF and t - i.lastblink > 10 then
+                i.Light:Enable(false)
+                i.lastblink = t
+            end
+        elseif cansee < LIGHT_TURN_ON then
+            -- 未亮：环境光变暗（黄昏）就点亮
+            i.Light:Enable(true)
+        end
+    end)
+end
+
 GLOBAL.KisakiCD = KisakiCD
 GLOBAL.KisakiMoveItemFromAllOfSlot = KisakiMoveItemFromAllOfSlot -- 模组容器shift取东西要加标识符
 GLOBAL.KisakiMakeDragableUI = KisakiMakeDragableUI               -- 设置UI可拖拽(右键)
 GLOBAL.KisakiGetDragPos = KisakiGetDragPos                       -- 获取拖拽UI坐标
 GLOBAL.KisakiResetUIPos = KisakiResetUIPos                       -- 重置拖拽UI坐标
 GLOBAL.KisakiMakeWidgetMovable = KisakiMakeWidgetMovable         -- 使UI可拖拽(左键)
+GLOBAL.KisakiStartDayNightLight = KisakiStartDayNightLight       -- 发光物品通过判断周围光亮自行发光熄灯

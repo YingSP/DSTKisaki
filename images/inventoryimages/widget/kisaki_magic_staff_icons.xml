@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<Atlas>
+	<Texture filename="kisaki_magic_staff_icons.tex" />
+	<Elements>
+		<Element name="kisaki_magic_staff_icons_blink.tex" u1="0.000244141" u2="0.0622559" v1="0.00390625" v2="0.996094" />
+		<Element name="kisaki_magic_staff_icons_deconstruct.tex" u1="0.0627441" u2="0.124756" v1="0.00390625" v2="0.996094" />
+		<Element name="kisaki_magic_staff_icons_freeze.tex" u1="0.125244" u2="0.187256" v1="0.00390625" v2="0.996094" />
+		<Element name="kisaki_magic_staff_icons_ignite.tex" u1="0.187744" u2="0.249756" v1="0.00390625" v2="0.996094" />
+		<Element name="kisaki_magic_staff_icons_mooncall.tex" u1="0.250244" u2="0.312256" v1="0.00390625" v2="0.996094" />
+		<Element name="kisaki_magic_staff_icons_moonfall.tex" u1="0.312744" u2="0.374756" v1="0.00390625" v2="0.996094" />
+		<Element name="kisaki_magic_staff_icons_normal.tex" u1="0.375244" u2="0.437256" v1="0.00390625" v2="0.996094" />
+		<Element name="kisaki_magic_staff_icons_shadowfall.tex" u1="0.437744" u2="0.499756" v1="0.00390625" v2="0.996094" />
+		<Element name="kisaki_magic_staff_icons_starcall.tex" u1="0.500244" u2="0.562256" v1="0.00390625" v2="0.996094" />
+		<Element name="kisaki_magic_staff_icons_teleport.tex" u1="0.562744" u2="0.624756" v1="0.00390625" v2="0.996094" />
+	</Elements>
+</Atlas>

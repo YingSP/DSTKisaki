@@ -8,7 +8,9 @@ PrefabFiles = {
     "kisaki_boxes",
     "kisaki_space_chest",
     "kisaki_yog_key",
-    "kisaki_star_tool",
-    "kisaki_projectiles",
+    "kisaki_tool",
+    "kisaki_projectile",
+    "kisaki_complexprojectile",
     "kisaki_packing",
+    "kisaki_magic_staff",
 }

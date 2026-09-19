@@ -29,8 +29,8 @@ local function MakeItem(name, def)
             end
         end
         -- 额外执行方法
-        if def.eneity_postinit then
-            def.eneity_postinit(inst)
+        if def.entity_postinit then
+            def.entity_postinit(inst)
         end
 
         inst.entity:SetPristine() -- 设置为初始状态

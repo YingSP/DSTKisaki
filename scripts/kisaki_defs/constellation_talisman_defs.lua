@@ -352,6 +352,13 @@ local TALISMANS = {
         end,
         master_postinit = function(inst)
             GeminiMaster(inst)
+            -- 保存读取
+            inst.OnSave = function(inst, data)
+                data.isopen = inst.isopen
+            end
+            inst.OnPreLoad = function(inst, data)
+                inst.isopen = data == nil or data.isopen ~= false
+            end
         end
     },
     -- 星灵守护-巨蟹
@@ -593,6 +600,13 @@ local TALISMANS = {
             inst.components.insulator.GetInsulation = adaptiveGetInsulation
             -- 双子
             GeminiMaster(inst)
+            -- 保存读取
+            inst.OnSave = function(inst, data)
+                data.isopen = inst.isopen
+            end
+            inst.OnPreLoad = function(inst, data)
+                inst.isopen = data == nil or data.isopen ~= false
+            end
         end
     },
 }

@@ -221,8 +221,8 @@ local function MakeProjectile(name, def)
             end
         end
         -- 额外执行方法
-        if def.eneity_postinit then
-            def.eneity_postinit(inst)
+        if def.entity_postinit then
+            def.entity_postinit(inst)
         end
 
         inst.entity:SetPristine() -- 设置为初始状态
@@ -289,8 +289,8 @@ projectile_defs.kisaki_ether_bottle = {
     prefabs = { "bomb_lunarplant_explode_fx", "crab_king_shine", "fx_book_light", "reticule", "reticuleaoe", "reticuleaoeping" },
 }
 
-local projectiles = {}
+local complexprojectiles = {}
 for k, v in pairs(projectile_defs) do
-    table.insert(projectiles, MakeProjectile(k, v))
+    table.insert(complexprojectiles, MakeProjectile(k, v))
 end
-return unpack(projectiles)
+return unpack(complexprojectiles)
