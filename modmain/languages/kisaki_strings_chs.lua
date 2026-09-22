@@ -143,6 +143,8 @@ STRINGS.KISAKI_MAGIC_STAFF = {
     NEED_MORE = "旅升级需要：\n%s", -- 给予无效物品时列出还缺的材料
     UPGRADE_FULL = "旅已臻圆满，进化为渡海之诗！", -- 全部升级完成进化
     TOO_FAR = "距离太远了。", -- 施法距离不足
+    TARGET_NOT_HERE = "目标不在当前世界。",
+    NO_DESTINATION = "目标附近没有安全的落脚点。",
     CANT_IGNITE = "这个点不着。", -- 点燃目标无效
     NOTHING_TO_EXTINGUISH = "这个冻不住。", -- 灭火状态没有可扑灭的目标
 }

@@ -61,7 +61,6 @@ local function MakeTailsman(def)
         if def.restrictedtag then
             inst.components.equippable.restrictedtag = def.restrictedtag -- 限制特定tag的角色可装备
         end
-        inst.components.equippable.restrictedtag = "kisaki"              -- 专属
         inst:AddTag("amulet")                                            -- 护符位
 
         MakeHauntableLaunch(inst)                                        -- 可作祟

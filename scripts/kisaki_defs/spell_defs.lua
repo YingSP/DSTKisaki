@@ -487,8 +487,23 @@ end
 -- 瞬移：右键地面瞬移（参考原版 orangestaff 的 blinkstaff 组件效果）
 ------------------------------------------------------------------------------------------------------------------------------
 
+local function CanBlinkToPosition(doer, pos)
+    local x, y, z = pos:Get()
+    local map = TheWorld.Map
+    if map:IsGroundTargetBlocked(pos) then
+        return false
+    end
+    if map:IsPassableAtPoint(x, y, z) then
+        return true
+    end
+    local drownable = doer.components.drownable
+    return drownable ~= nil and drownable.enabled == false
+        and map:IsOceanTileAtPoint(x, y, z)
+        and not map:IsVisualGroundAtPoint(x, y, z)
+end
+
 local function SpellBlink(inst, target, pos, doer)
-    if pos == nil or doer == nil then
+    if pos == nil or doer == nil or not CanBlinkToPosition(doer, pos) then
         return false
     end
 
@@ -520,7 +535,7 @@ local function SpellBlink(inst, target, pos, doer)
         end
         -- 延迟落点再校验一次，期间地形可能变化（如船开走）
         local px, py, pz = pos:Get()
-        if TheWorld.Map:IsPassableAtPoint(px, py, pz) and not TheWorld.Map:IsGroundTargetBlocked(pos) then
+        if CanBlinkToPosition(doer, pos) then
             doer.Physics:Teleport(px, py, pz)
         end
         doer:Show()
@@ -724,7 +739,7 @@ local function GetNinePlantPoints(pt)
     return points
 end
 
--- 使用原版 spellcaster 的远程快速施法流程，20 格。
+-- 使用原版 spellcaster 的远程快速施法流程，施法范围与旅法杖一致。
 local function PlantNineSeeds(staff, target, pt, doer)
     if doer == nil or pt == nil or doer.components.inventory == nil then
         return
@@ -755,7 +770,8 @@ local function PlantNineSeeds(staff, target, pt, doer)
 end
 -- 仅允许在可种植陆地施法；种子不足在施法函数内提示，以避免触发默认失败台词。
 local function CanPlantNineSeeds(doer, target, pt)
-    return pt ~= nil and TheWorld.Map:CanPlantAtPoint(pt.x, pt.y, pt.z)
+    return pt ~= nil and doer:GetDistanceSqToPoint(pt) <= TUNING.KISAKI_CASTSPELL_RANGE * TUNING.KISAKI_CASTSPELL_RANGE
+        and TheWorld.Map:CanPlantAtPoint(pt.x, pt.y, pt.z)
 end
 
 return {

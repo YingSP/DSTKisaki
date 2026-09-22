@@ -1,4 +1,12 @@
 local amuletutil = require("utils/amuletutil")
+local teleportutil = require("utils/teleportutil")
+
+local old_castspell_strfn = ACTIONS.CASTSPELL.strfn
+local old_castspell_pre_action_cb = ACTIONS.CASTSPELL.pre_action_cb
+local STAFF_MODES = {
+    "normal", "ignite", "freeze", "teleport", "deconstruct", "blink",
+    "starcall", "mooncall", "moonfall", "shadowfall",
+}
 
 local function MakeRangeCheckFn(range)
     return function(doer, target)
@@ -8,12 +16,6 @@ local function MakeRangeCheckFn(range)
     end
 end
 local DefaultRangeCheck = MakeRangeCheckFn(4)
-
-local NOTENTCHECK_CANT_TAGS = { "FX", "INLIMBO" }
-local function noentcheckfn(pt)
-    return not TheWorld.Map:IsPointNearHole(pt) and
-        #TheSim:FindEntities(pt.x, pt.y, pt.z, 1, nil, NOTENTCHECK_CANT_TAGS) == 0
-end
 
 -- 判断是否是护符，拒绝带护甲的装备（即使他是护符）
 local function IsStorableMultivariateAmulet(item, use_replica)
@@ -221,53 +223,7 @@ local actions = {
         str = STRINGS.KISAKI_ACTION.KISAKIOPENDOOR,
         fn = function(act)
             if act.doer ~= nil and act.invobject ~= nil and act.target ~= nil then
-                local chest_list = TheWorld.components.kisaki_ents_manager.chest_list
-                if not chest_list or not next(chest_list) then return end
-                -- 找到离玩家最近的
-                local pt = act.doer:GetPosition()
-                local closest_distance = nil
-                local closest_chest = nil
-                for chest, value in pairs(chest_list) do
-                    print("当前世界列表里的容器" .. tostring(chest))
-                    if not closest_distance or chest:GetDistanceSqToPoint(pt) < closest_distance then
-                        closest_distance = chest:GetDistanceSqToPoint(pt)
-                        closest_chest = chest
-                    end
-                end
-                if not closest_chest then return end
-                local closest_chest_pt = closest_chest:GetPosition()
-
-                -- 玩家边上进入的洞
-                local offset = FindWalkableOffset(pt, math.random() * TWOPI, 3 + math.random(), 16, false, true,
-                        noentcheckfn, true, true)
-                    or FindWalkableOffset(pt, math.random() * TWOPI, 5 + math.random(), 16, false, true, noentcheckfn,
-                        true, true)
-                    or FindWalkableOffset(pt, math.random() * TWOPI, 7 + math.random(), 16, false, true, noentcheckfn,
-                        true, true)
-                if offset ~= nil then
-                    pt = pt + offset
-                end
-                -- 目标位置边上的洞
-                local closest_chest_pt_offset = FindWalkableOffset(closest_chest_pt, math.random() * TWOPI,
-                        3 + math.random(), 16, false, true,
-                        noentcheckfn, true,
-                        true)
-                    or FindWalkableOffset(closest_chest_pt, math.random() * TWOPI, 5 + math.random(), 16, false, true,
-                        noentcheckfn,
-                        true, true)
-                    or FindWalkableOffset(closest_chest_pt, math.random() * TWOPI, 7 + math.random(), 16, false, true,
-                        noentcheckfn,
-                        true, true)
-                if closest_chest_pt_offset ~= nil then
-                    closest_chest_pt = closest_chest_pt + closest_chest_pt_offset
-                end
-
-                -- 生成虫洞
-                local portal = SpawnPrefab("pocketwatch_portal_entrance")
-                portal.Transform:SetPosition(pt:Get())
-                portal:SpawnExit(closest_chest_pt.recall_worldid, closest_chest_pt.x, closest_chest_pt.y,
-                    closest_chest_pt.z)
-                return true
+                return teleportutil.OpenDoor(act.doer)
             end
         end,
         state = "give",         -- sg
@@ -543,6 +499,33 @@ local component_actions = {
 -- 修改老动作
 local old_murder_fn = ACTIONS.MURDER.fn
 local old_actions = {
+    -- 旅/渡海之诗与《神曲》的右键法术不先走向目标；有效距离由各自的施法入口校验。
+    {
+        switch = true,
+        id = "CASTSPELL",
+        actiondata = {
+            strfn = function(act)
+                if act ~= nil and act.invobject ~= nil and act.invobject:HasTag("kisaki_staff") then
+                    for _, mode in ipairs(STAFF_MODES) do
+                        if act.invobject:HasTag("kisaki_staff_mode_" .. mode) then
+                            return "KISAKI_" .. string.upper(mode)
+                        end
+                    end
+                    return nil
+                end
+                return old_castspell_strfn ~= nil and old_castspell_strfn(act) or nil
+            end,
+            pre_action_cb = function(act)
+                if old_castspell_pre_action_cb ~= nil then
+                    old_castspell_pre_action_cb(act)
+                end
+                if act.invobject ~= nil
+                    and (act.invobject:HasTag("kisaki_staff") or act.invobject:HasTag("kisaki_star_tool")) then
+                    act.distance = math.huge
+                end
+            end,
+        },
+    },
     --谋杀
     {
         switch = true,

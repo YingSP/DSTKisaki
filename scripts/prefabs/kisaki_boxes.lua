@@ -1,3 +1,34 @@
+--[[[预制物] 随身容器（盒子）
+[生成] MakeBox(name, def) → item 形态 name / 落地 name_chest / name_placer 三个 prefab
+       两形态靠 transferEverything 互转（落地 ondeploy / 锤回收 onhammered），
+       转换时调 def.syncboxpropertyfn 搬属性。数据存在 inst[升级项..num]。
+[成员] kisaki_portable_box  杂物袋，无升级进度
+       kisaki_magic_box     魔法盒，升级列表 TUNING.KISAKI_MAGIC_BOX_FUNCTION_LIST
+       kisaki_library_box   图书馆，升级列表 TUNING.KISAKI_LIBRARY_BOX_FUNCTION_LIST
+[关联] kisaki_world_data.lua     世界侧进度仓库（共享模式的数据源）
+       containers.lua            UI/按钮，含 magicboxupgrade 升级按钮
+[注意] 空间箱 kisaki_space_chest 是完全继承制，从槽位盒子实时读，不受本文件影响
+
+[模式-非共享] TUNING.KISAKI_CONTAINER_LEVEL_SHARE = false
+              各容器自己持有进度，吃材料累加，达到 neednum 解锁，互不影响。
+[模式-共享]   默认开启。进度存进世界组件 kisaki_world_data，同类容器共享、可跨分片。
+              worlddata 判空即跳过，所以关掉开关自然退回非共享行为，无需额外分支。
+
+[时机] 与世界数据合并的 4 个点（一律双向取高，容器自带值可能更高）：
+       master_postinit       刚造出来，一出生就带上世界进度
+       syncboxpropertyfn     落地/回收，两形态转换
+       onpreload             读档、跨分片迁移落地（断线期间升的级靠这里带过来）
+       吃材料 / 升级按钮      写进世界数据并回读合并值（世界可能比其他容器高）
+       末两个写入点在 containers.lua 的 magicboxupgrade，改的时候要一起看
+]]
+local function syncContainerLevelFromWorld(inst, boxname)
+    local worlddata = TheWorld ~= nil and TheWorld.components.kisaki_world_data or nil
+    if worlddata == nil then
+        return
+    end
+    worlddata:SyncContainerLevel(inst, boxname)
+end
+
 local function onopen(inst)
     inst.AnimState:PlayAnimation("open")
     inst.SoundEmitter:PlaySound("dontstarve/wilson/chest_open")
@@ -101,8 +132,14 @@ local function MagicBoxOnGetItemFromPlayer(inst, giver, item)
     for i, data in ipairs(TUNING.KISAKI_MAGIC_BOX_FUNCTION_LIST) do
         if item.prefab == data.needprefab then
             local action = data.action
-            -- 更新数据
-            inst[action .. "num"] = inst[action .. "num"] + num
+            -- [进度-写] 写进世界数据（取高）并回读；世界可能高于本容器
+            local newnum = (inst[action .. "num"] or 0) + num
+            local worlddata = TheWorld.components.kisaki_world_data
+            if worlddata ~= nil then
+                worlddata:SetContainerLevel("kisaki_magic_box", action, newnum)
+                newnum = worlddata:GetContainerLevel("kisaki_magic_box", action)
+            end
+            inst[action .. "num"] = newnum
             -- 刷新功能
             if action == "preserver" or action == "fresh" then
                 inst.addpreserver()
@@ -228,8 +265,14 @@ local function LibraryBoxOnGetItemFromPlayer(inst, giver, item)
     for i, data in ipairs(TUNING.KISAKI_LIBRARY_BOX_FUNCTION_LIST) do
         if item.prefab == data.needprefab then
             local id = data.id
-            -- 更新数据
-            inst[id .. "num"] = inst[id .. "num"] + num
+            -- [进度-写] 写进世界数据（取高）并回读；世界可能高于本容器
+            local newnum = (inst[id .. "num"] or 0) + num
+            local worlddata = TheWorld.components.kisaki_world_data
+            if worlddata ~= nil then
+                worlddata:SetContainerLevel("kisaki_library_box", id, newnum)
+                newnum = worlddata:GetContainerLevel("kisaki_library_box", id)
+            end
+            inst[id .. "num"] = newnum
             -- 刷新功能
             LibraryBoxRefresh(inst)
             -- 语言提示
@@ -549,10 +592,15 @@ box_defs.kisaki_magic_box = {
                 oldKisakiMoveItemFromAllOfSlot(self, slot, container, opener, ...)
             end
         end
+        -- [合并-master_postinit] 须在 addpreserver/addrestorationdurability 定义之后
+        syncContainerLevelFromWorld(inst, "kisaki_magic_box")
+        inst.addpreserver()
+        inst.addrestorationdurability()
     end,
     syncboxpropertyfn = function(inst, obj)
+        syncContainerLevelFromWorld(obj, "kisaki_magic_box") -- [合并-boxprop] 再刷新功能
         for i, datas in ipairs(TUNING.KISAKI_MAGIC_BOX_FUNCTION_LIST) do
-            obj[datas.action .. "num"] = inst[datas.action .. "num"] or 0
+            obj[datas.action .. "num"] = obj[datas.action .. "num"] or inst[datas.action .. "num"] or 0
         end
         obj.fishlist = inst.fishlist or {}
         obj.addpreserver()
@@ -570,6 +618,7 @@ box_defs.kisaki_magic_box = {
                 inst[datas.action .. "num"] = data[datas.action .. "num"] or 0
             end
             inst.fishlist = data.fishlist or {}
+            syncContainerLevelFromWorld(inst, "kisaki_magic_box") -- [合并-onpreload]
             inst.addpreserver()
             inst.addrestorationdurability()
         end
@@ -614,6 +663,8 @@ box_defs.kisaki_library_box = {
         for i, data in ipairs(TUNING.KISAKI_LIBRARY_BOX_FUNCTION_LIST) do
             inst[data.id .. "num"] = 0
         end
+        syncContainerLevelFromWorld(inst, "kisaki_library_box") -- [合并-master_postinit]
+        LibraryBoxRefresh(inst)                                  -- 合并后刷新科技解锁状态
         -- 修改shift移动物品，防止嵌套移动回原箱子
         local oldKisakiMoveItemFromAllOfSlot = inst.components.container.MoveItemFromAllOfSlot
         inst.components.container.MoveItemFromAllOfSlot = function(self, slot, container, opener, ...)
@@ -626,8 +677,9 @@ box_defs.kisaki_library_box = {
         end
     end,
     syncboxpropertyfn = function(inst, obj)
+        syncContainerLevelFromWorld(obj, "kisaki_library_box") -- [合并-boxprop] 再刷新科技
         for i, datas in ipairs(TUNING.KISAKI_LIBRARY_BOX_FUNCTION_LIST) do
-            obj[datas.id .. "num"] = inst[datas.id .. "num"] or 0
+            obj[datas.id .. "num"] = obj[datas.id .. "num"] or inst[datas.id .. "num"] or 0
         end
         LibraryBoxRefresh(obj)
     end,
@@ -641,6 +693,7 @@ box_defs.kisaki_library_box = {
             for i, datas in ipairs(TUNING.KISAKI_LIBRARY_BOX_FUNCTION_LIST) do
                 inst[datas.id .. "num"] = data[datas.id .. "num"] or 0
             end
+            syncContainerLevelFromWorld(inst, "kisaki_library_box") -- [合并-onpreload]
             LibraryBoxRefresh(inst)
         end
     end

@@ -1670,9 +1670,14 @@ local function magicboxmorebtnfn(inst, doer, self)
         end
     end
 end
--- 升级按钮
+-- 升级按钮：吃掉容器内材料累加升级进度
+-- [进度-读] 先与世界数据对齐，否则下面 neednum 守卫会拿过期值判断、多吃材料
 local function magicboxupgrade(doer, inst)
     if inst and doer and inst.components.container and not inst.components.container.readonlycontainer and inst.components.container.slots and doer:HasTag("player") then
+        local worlddata = TheWorld ~= nil and TheWorld.components.kisaki_world_data or nil
+        if worlddata ~= nil then
+            worlddata:SyncContainerLevel(inst, "kisaki_magic_box")
+        end
         for slot, item in pairs(inst.components.container.slots) do
             for i, data in ipairs(TUNING.KISAKI_MAGIC_BOX_FUNCTION_LIST) do
                 local action = data.action
@@ -1693,7 +1698,13 @@ local function magicboxupgrade(doer, inst)
                         else
                             inst.components.container:RemoveItem(item, true):Remove()
                         end
-                        inst[action .. "num"] = inst[action .. "num"] + num
+                        -- [进度-写] 写进世界数据（取高）并回读；世界可能高于本容器
+                        local newnum = inst[action .. "num"] + num
+                        if worlddata ~= nil then
+                            worlddata:SetContainerLevel("kisaki_magic_box", action, newnum)
+                            newnum = worlddata:GetContainerLevel("kisaki_magic_box", action)
+                        end
+                        inst[action .. "num"] = newnum
                         if item.prefab == inst.preserverneedprefab or item.prefab == inst.freshneedprefab then
                             inst.addpreserver()
                         end
