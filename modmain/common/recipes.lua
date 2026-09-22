@@ -118,7 +118,6 @@ local recipe_all = {
         recipe_name = 'kisaki_star_tool',
         ingredients_data = {
             kisaki_base_tool = 1,
-            cane = 1,
             thulecite = 10,
             goldnugget = 40,
             kisaki_magic = 500,
@@ -486,7 +485,7 @@ for _k, _r in pairs(recipe_all) do
                 table.insert(_r.ingredients, Ingredient(string.lower(k), v))
             else
                 table.insert(_r.ingredients,
-                    Ingredient(string.lower(k), v, recipe_images[k].atlas, nil, recipe_images[k].images))
+                    Ingredient(string.lower(k), v, recipe_images[k].atlas, nil, recipe_images[k].image))
             end
         end
     end

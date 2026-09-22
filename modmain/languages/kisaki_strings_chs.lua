@@ -108,6 +108,13 @@ STRINGS.KISAKI_ACTION = {
 -- 万能工具远程种植使用原版 CASTSPELL 动作，补充其右键动作文本。
 STRINGS.ACTIONS.CASTSPELL.KISAKISTARPLANT = "种植"
 
+-- 万能工具右键种植失败提示。
+STRINGS.CHARACTERS.KISAKI.ACTIONFAIL.CASTSPELL = {
+    KISAKI_NO_PLANT_SEED = "背包里没有可种植的种子。",
+    KISAKI_INVALID_PLANT_TURF = "这种种子不能种在这里。",
+    KISAKI_PLANT_OUT_OF_RANGE = "目标位置太远了。",
+}
+
 -- 旅各状态的右键动作文本（CASTSPELL 的 strfn 按状态标签返回对应子键）
 STRINGS.ACTIONS.CASTSPELL.KISAKI_IGNITE = "点燃"
 STRINGS.ACTIONS.CASTSPELL.KISAKI_FREEZE = "冰冻"
@@ -143,6 +150,8 @@ STRINGS.KISAKI_MAGIC_STAFF = {
     NEED_MORE = "旅升级需要：\n%s", -- 给予无效物品时列出还缺的材料
     UPGRADE_FULL = "旅已臻圆满，进化为渡海之诗！", -- 全部升级完成进化
     TOO_FAR = "距离太远了。", -- 施法距离不足
+    TARGET_NOT_HERE = "目标不在当前世界。",
+    NO_DESTINATION = "目标附近没有安全的落脚点。",
     CANT_IGNITE = "这个点不着。", -- 点燃目标无效
     NOTHING_TO_EXTINGUISH = "这个冻不住。", -- 灭火状态没有可扑灭的目标
 }

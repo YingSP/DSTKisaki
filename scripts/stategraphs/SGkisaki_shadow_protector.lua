@@ -630,7 +630,7 @@ local states =
         },
 
         onexit = function(inst)
-            if not inst.sg.statemem.appearing then
+            if not inst.sg.statemem.appearing and inst:IsValid() and inst.Physics then
                 ToggleOnCharacterCollisions(inst)
             end
         end,
@@ -671,7 +671,11 @@ local states =
             end),
         },
 
-        onexit = ToggleOnCharacterCollisions,
+        onexit = function(inst)
+            if inst:IsValid() and inst.Physics then
+                ToggleOnCharacterCollisions(inst)
+            end
+        end,
     },
 
     -- 冲刺前置状态

@@ -189,7 +189,9 @@ projectile_defs.kisaki_brilliance_projectile = {
     bounces_fn = function(inst, target, attacker)
         local staff = attacker ~= nil and attacker:IsValid() and attacker.components.inventory ~= nil
             and attacker.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS) or nil
-        return staff ~= nil and staff:HasTag("kisaki_staff_unlock_moonfall") and 6 or 1
+        -- 普通状态禁用纯粹辉煌带来的弹射；未设置状态的旧存档也按普通状态处理。
+        return staff ~= nil and staff.staff_mode ~= nil and staff.staff_mode ~= "normal"
+            and staff:HasTag("kisaki_staff_unlock_moonfall") and 6 or 1
     end,
 }
 

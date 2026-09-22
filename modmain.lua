@@ -35,8 +35,12 @@ modimport("modmain/common/recipes_copy")
 modimport("modmain/common/fx")
 -- 增加原版通信内容
 modimport("modmain/common/rpc")
--- 加载模组UI
-modimport("modmain/common/ui")
+-- 加载模组UI与按键绑定
+if not TheNet:IsDedicated() then
+    modimport("modmain/common/ui")
+    -- 注册客户端按键映射
+    modimport("modmain/common/keybindings")
+end
 -- debug命令
 if TUNING.KISAKI_DEBUGER then
     modimport("modmain/common/debug")

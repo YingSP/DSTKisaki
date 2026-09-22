@@ -7,6 +7,7 @@ local log = require("utils/kisakilogger")
 local staff_spells = require("kisaki_defs/spell_defs")
 local name = "kisaki_magic_staff"
 local name_max = "kisaki_magic_staff_max"
+local STAFF_CAST_RANGE = TUNING.KISAKI_CASTSPELL_RANGE
 -- 各状态的施法函数：法术本体在 spell_defs，这里只声明“哪个状态用哪一个”
 local SpellIgnite = staff_spells.SpellIgnite
 local SpellFreeze = staff_spells.SpellFreeze
@@ -52,7 +53,7 @@ local prefabs = {
 -- 数值累加都按此顺序），表项的 key 字段供按名查找，无需再单独维护一份顺序表。
 --   施法相关：spell=该状态右键施放的法术（本体见 kisaki_defs/spell_defs.lua），
 --     target=可右键目标施放，point=可右键地面施放，recipes=仅限有配方的目标，
---     locomotorspvp=仅限可移动单位（含自己），range=施法距离，
+--     locomotorspvp=仅限可移动单位（含自己），右键法术统一限制为 64 格，
 --     sanity=成功后消耗的 SAN，water=允许施放在海面
 --   解锁相关：unlock_item/count 解锁所需材料与数量（喂食法杖解锁）
 --   武器数值：damage/planardamage —— normal 写基础值，其余状态写"解锁后追加的增量"；
@@ -101,7 +102,6 @@ local MODES = {
         count = 3,
         target = true,
         recipes = true,
-        range = 10,
         sanity = TUNING.SANITY_MEDLARGE,
     },
     -- 瞬移：橙宝石，移速从基础 10% 提到 25%
@@ -199,35 +199,18 @@ local function StaffSay(inst, msg)
     end
 end
 
--- 右键动作文本跟随当前状态（"点燃"/"扑灭"/...）：
-local old_castspell_strfn = ACTIONS.CASTSPELL.strfn
-ACTIONS.CASTSPELL.strfn = function(act)
-    if act ~= nil and act.invobject ~= nil and act.invobject:HasTag("kisaki_magic_staff") then
-        for _, def in ipairs(MODES) do
-            if act.invobject:HasTag("kisaki_staff_mode_" .. def.key) then
-                return "KISAKI_" .. string.upper(def.key)
-            end
-        end
-        return nil
-    end
-    return old_castspell_strfn ~= nil and old_castspell_strfn(act) or nil
-end
-
 -- 施法统一入口
 local function SpellDispatch(inst, target, pos, doer, spell, def)
     if def == nil or spell == nil or doer == nil then
         return false
     end
 
-    -- 施法距离校验（目标或落点与施法者的距离）
-    if def.range ~= nil then
-        local cast_pos = target ~= nil and target:GetPosition() or pos
-        if cast_pos ~= nil and doer:GetDistanceSqToPoint(cast_pos) > def.range * def.range then
-            if doer.components.talker ~= nil then
-                doer.components.talker:Say(Text("TOO_FAR"))
-            end
-            return false
+    local cast_pos = target ~= nil and target:GetPosition() or pos
+    if cast_pos ~= nil and doer:GetDistanceSqToPoint(cast_pos) > STAFF_CAST_RANGE * STAFF_CAST_RANGE then
+        if doer.components.talker ~= nil then
+            doer.components.talker:Say(Text("TOO_FAR"))
         end
+        return false
     end
 
     local succ = spell(inst, target, pos, doer)
@@ -262,6 +245,9 @@ local function SetMode(inst, mode, quiet)
             inst:RemoveTag("kisaki_staff_mode_" .. m.key)
         end
     end
+
+    -- 瞬移模式允许客户端在海面生成右键动作；实际是否可踏水仍由服务端校验。
+    inst:AddOrRemoveTag("allow_action_on_impassable", mode == "blink")
 
     -- 清除旧状态的施法配置，再按新模式重建（"普通"状态没有任何施法行为）
     local spellcaster = inst.components.spellcaster
@@ -381,7 +367,7 @@ local function ApplyReticlePrefab(inst)
     end
 end
 
--- 右键瞄准圈落点：从角色朝向由远及近找第一个合法地面点（上限为 CASTSPELL 施法距离）
+-- 手柄瞄准圈落点：从角色朝向由远及近找施法范围内的合法地面点。
 local function ReticuleTargetFn(inst)
     local player = ThePlayer
     if player == nil then
@@ -389,7 +375,7 @@ local function ReticuleTargetFn(inst)
     end
     local ground = TheWorld.Map
     local pos = Vector3()
-    for r = ACTIONS.CASTSPELL.distance, 0.25, -0.25 do
+    for r = STAFF_CAST_RANGE, 0.25, -0.25 do
         pos.x, pos.y, pos.z = player.entity:LocalToWorldSpace(r, 0, 0)
         if ground:IsPassableAtPoint(pos.x, 0, pos.z, true) and not ground:IsGroundTargetBlocked(pos) then
             return pos
@@ -873,6 +859,7 @@ local function MakeStaff(is_max)
         SetupGroundLight(inst)                            -- 法杖发光
 
         inst:AddTag(name)                                 -- 物品标识
+        inst:AddTag("kisaki_staff")
         inst:AddTag("kisaki_spellbook")                   -- 法术书标识：容器 UI 与轮盘共存的判定依据
         if not is_max then
             inst:AddTag("kisakitrader")                   -- 没升满可以右键升级
@@ -919,7 +906,7 @@ local function MakeStaff(is_max)
         inst:AddComponent("spellcaster")                                 -- 右键法术施放组件，配置随状态切换而变化
         inst.components.spellcaster:SetCanCastFn(function() return true end)
         inst.components.spellcaster.quickcast = true                     -- 全部状态统一使用快速施法动作
-        inst.controller_use_attack_distance = ACTIONS.CASTSPELL.distance -- 施法距离
+        inst.controller_use_attack_distance = STAFF_CAST_RANGE -- 手柄自动选取目标的范围
 
         -- 升级交易组件：只有基础形态需要
         inst._upgrade_count = {}

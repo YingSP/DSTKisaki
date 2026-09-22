@@ -1,5 +1,12 @@
 -- 模组配置
+TUNING.KISAKI_CASTSPELL_RANGE = 64 -- 旅/渡海之诗与《神曲》的右键施法距离
 TUNING.KISAKI_DATA_SAVE = GetModConfigData("mod_data_save")                         --  角色换人不丢失数据
+TUNING.KISAKI_CONTAINER_LEVEL_SHARE = true                                          --  [容器升级] 共享，false 则各容器独立
+TUNING.KISAKI_CONTAINER_LEVEL_SYNC = true                                           --  [容器升级] 分片间同步，SHARE=false 时无效
+TUNING.KISAKI_CONTAINER_LEVEL_BOXES = {                                             --  [容器升级] 入库容器（item 形态 prefab 名）
+    kisaki_magic_box = true,
+    kisaki_library_box = true,
+}
 TUNING.KISAKI_RECIPES_SHARE = GetModConfigData("mod_recipes_share")                 --  角色通用道具配方共享
 -- 人物基础配置
 TUNING.KISAKI_HEALTH = GetModConfigData("init_health")                              --  初始生命值

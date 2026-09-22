@@ -61,6 +61,50 @@ for i, prefabname in ipairs(tarder_prefabs) do
     end)
 end
 
+
+-- 外部 tough 配置会把远古遗迹雕像的最后一下重置为 1。
+-- 记录月陨第一次把雕像打到最低形态，下一发跳过外部 onwork，正常完成剩余工作。
+local MOONFALL_STATUES = {
+    "ruins_statue_head",
+    "ruins_statue_head_nogem",
+    "ruins_statue_mage",
+    "ruins_statue_mage_nogem",
+}
+for _, prefab in ipairs(MOONFALL_STATUES) do
+    AddPrefabPostInit(prefab, function(inst)
+        if not TheWorld.ismastersim or inst.components.workable == nil then
+            return
+        end
+        inst:DoTaskInTime(0, function(inst)
+            local workable = inst.components.workable
+            if workable == nil or workable.kisaki_moonfall_compat then
+                return
+            end
+            local oldonwork = workable.onwork
+            if oldonwork == nil then
+                return
+            end
+            workable.kisaki_moonfall_compat = true
+            workable:SetOnWorkCallback(function(inst, worker, workleft, numworks, ...)
+                local moonfall = worker ~= nil and worker:HasTag("kisaki_moonfall")
+                if moonfall and inst.kisaki_moonfall_low and workleft <= 0 then
+                    -- 第二发：不调用外部 onwork，避免重复触发影怪/魔法等事件；
+                    -- 保持 workleft 为 0，让 Workable 正常执行 onfinish。
+                    inst.kisaki_moonfall_low = nil
+                    return
+                end
+
+                oldonwork(inst, worker, workleft, numworks, ...)
+                if moonfall and inst:IsValid() and inst.components.workable ~= nil
+                    and inst.components.workable.workleft == 1 then
+                    inst.kisaki_moonfall_low = true
+                end
+            end)
+        end)
+    end)
+end
+
+
 AddPrefabPostInit("kisaki_space_chest_child", function(inst)
     if TheWorld.ismastersim then
         inst:AddTag("kisaki_container") -- 特殊tag，防毒雾
@@ -1305,6 +1349,30 @@ end)
 
 ------------------------------------------------------------------------世界组件修改-------------------------------------------------------------------------
 
+--[[[监听] 容器升级进度提升时，把全图容器刷成最新
+[触发] kisaki_world_data:SetContainerLevel 内部广播 kisaki_container_level_changed
+       （本世界吃材料升级、或收到其他分片同步数据时都会触发）
+[逻辑] 遍历 Ents，把两类容器的 item 形态与 _chest 形态各合并一次
+[终止] 合并是双向取高的幂等操作，重复进入无额外提升 → 广播链自然终止
+]]
+local function OnKisakiContainerLevelChanged(world)
+    local worlddata = world.components.kisaki_world_data
+    if worlddata == nil then
+        return
+    end
+    for _, v in pairs(Ents) do
+        local prefab = v.prefab
+        if prefab ~= nil then
+            -- 同时考虑随身盒子状态和放在地上的状态
+            local boxname = TUNING.KISAKI_CONTAINER_LEVEL_BOXES[prefab] and prefab
+                or TUNING.KISAKI_CONTAINER_LEVEL_BOXES[prefab:sub(1, -7)] and prefab:sub(1, -7)
+            if boxname then
+                worlddata:SyncContainerLevel(v, boxname)
+            end
+        end
+    end
+end
+
 -- 世界预制物添加监听，用于实现角色等级等信息保存
 local function Onplayerdespawnanddelete(world, data)
     local player = data.player or data
@@ -1352,9 +1420,15 @@ AddPrefabPostInit("world", function(inst)
     end
     -- 给服务器世界添加一个组件用于存储信息
     inst:AddComponent("kisaki_info_save")
+    -- 世界侧共享数据，跨容器、跨分片（关闭共享时不挂，容器各自记录）
+    if TUNING.KISAKI_CONTAINER_LEVEL_SHARE then
+        inst:AddComponent("kisaki_world_data")
+    end
     if collect_all_item_scope then
         inst:AddComponent("kisaki_ents_manager")
     end
+    -- 容器升级进度有提升时，刷新世界里所有容器
+    inst:ListenForEvent("kisaki_container_level_changed", OnKisakiContainerLevelChanged)
     -- 角色退出世界时存储信息
     inst:ListenForEvent("ms_playerdespawn", Onplayerdespawnanddelete)
     inst:ListenForEvent("ms_playerdespawnandmigrate", Onplayerdespawnanddelete)

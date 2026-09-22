@@ -42,7 +42,9 @@ local function GeminiEquip(inst, owner)
         local shadows = owner.components.petleash:GetPetsWithPrefab("kisaki_shadow_protector_gemini")
         if shadows and #shadows > 0 then
             for i, shadow in ipairs(shadows) do
-                shadow.sg:GoToState("quickdespawn")
+                if shadow and shadow:IsValid() and shadow.sg then
+                    shadow.sg:GoToState("quickdespawn")
+                end
             end
             inst.components.rechargeable:SetPercent(1)
         end
@@ -57,7 +59,9 @@ local function GeminiUnEquip(inst, owner)
     local shadows = owner.components.petleash:GetPetsWithPrefab("kisaki_shadow_protector_gemini")
     if shadows and #shadows > 0 then
         for i, shadow in ipairs(shadows) do
-            shadow.sg:GoToState("quickdespawn")
+            if shadow and shadow:IsValid() and shadow.sg then
+                shadow.sg:GoToState("quickdespawn")
+            end
         end
     end
     -- 减少一个上限
@@ -81,7 +85,7 @@ local function GeminiMaster(inst)
             inst.components.rechargeable:Discharge(150)
             -- 生成守护者
             local shadow = owner.components.petleash:SpawnPetAt(0, 0, 0, "kisaki_shadow_protector_gemini")
-            if shadow == nil then
+            if shadow == nil or not shadow:IsValid() then
                 return
             end
             shadow.components.skinner:CopySkinsFromPlayer(owner)
@@ -105,6 +109,9 @@ local function GeminiMaster(inst)
         end
     end
     inst.GeminiOnPetLost = function(self, owner)
+        if not inst or not inst.components.rechargeable then
+            return
+        end
         -- CD重置
         local oldPercent = inst.components.rechargeable:GetPercent()
         if not inst.components.rechargeable:IsCharged() then

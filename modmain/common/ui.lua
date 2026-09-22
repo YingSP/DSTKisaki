@@ -75,3 +75,12 @@ local function AddUserInfoUI(self)
     end
 end
 AddClassPostConstruct("widgets/controls", AddUserInfoUI)
+
+-- 玩家传送轮盘
+local PlayerTeleportWheel = require("widgets/kisaki_player_teleport_wheel")
+AddClassPostConstruct("widgets/controls", function(controls)
+    local wheel = controls.commandwheelroot:AddChild(PlayerTeleportWheel(controls.owner))
+    wheel:SetScale(TheFrontEnd:GetProportionalHUDScale())
+    wheel:Hide()
+    controls.kisaki_player_teleport_wheel = wheel
+end)

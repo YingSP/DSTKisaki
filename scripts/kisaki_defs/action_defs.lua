@@ -1,4 +1,12 @@
 local amuletutil = require("utils/amuletutil")
+local teleportutil = require("utils/teleportutil")
+
+local old_castspell_strfn = ACTIONS.CASTSPELL.strfn
+local old_castspell_pre_action_cb = ACTIONS.CASTSPELL.pre_action_cb
+local STAFF_MODES = {
+    "normal", "ignite", "freeze", "teleport", "deconstruct", "blink",
+    "starcall", "mooncall", "moonfall", "shadowfall",
+}
 
 local function MakeRangeCheckFn(range)
     return function(doer, target)
@@ -9,16 +17,33 @@ local function MakeRangeCheckFn(range)
 end
 local DefaultRangeCheck = MakeRangeCheckFn(4)
 
-local NOTENTCHECK_CANT_TAGS = { "FX", "INLIMBO" }
-local function noentcheckfn(pt)
-    return not TheWorld.Map:IsPointNearHole(pt) and
-        #TheSim:FindEntities(pt.x, pt.y, pt.z, 1, nil, NOTENTCHECK_CANT_TAGS) == 0
-end
-
 -- 判断是否是护符，拒绝带护甲的装备（即使他是护符）
 local function IsStorableMultivariateAmulet(item, use_replica)
     return amuletutil.IsStorableAmulet(item, use_replica)
 end
+
+-- 客户端动作检查读 replica，服务端执行读 components。
+local function HasContainer(item, use_replica)
+    if item == nil then
+        return false
+    end
+    if use_replica then
+        return item.replica ~= nil and item.replica.container ~= nil
+    end
+    return item.components ~= nil and item.components.container ~= nil
+end
+
+local function RemoveAction(actionlist, action)
+    if actionlist == nil or action == nil then
+        return
+    end
+    for index = #actionlist, 1, -1 do
+        if actionlist[index] == action then
+            table.remove(actionlist, index)
+        end
+    end
+end
+
 -- 获取装备中的融合护符
 local function GetMultivariateAmulet(inventory)
     return amuletutil.GetEquippedOuter(inventory)
@@ -94,6 +119,11 @@ local actions = {
             local item = act.invobject
             local inventory = doer ~= nil and doer.components.inventory or nil
             if inventory == nil or item == nil then
+                return false
+            end
+
+            -- 容器护符应优先显示关闭容器，不能被“脱下”动作抢占。
+            if HasContainer(item, false) then
                 return false
             end
 
@@ -221,58 +251,12 @@ local actions = {
         str = STRINGS.KISAKI_ACTION.KISAKIOPENDOOR,
         fn = function(act)
             if act.doer ~= nil and act.invobject ~= nil and act.target ~= nil then
-                local chest_list = TheWorld.components.kisaki_ents_manager.chest_list
-                if not chest_list or not next(chest_list) then return end
-                -- 找到离玩家最近的
-                local pt = act.doer:GetPosition()
-                local closest_distance = nil
-                local closest_chest = nil
-                for chest, value in pairs(chest_list) do
-                    print("当前世界列表里的容器" .. tostring(chest))
-                    if not closest_distance or chest:GetDistanceSqToPoint(pt) < closest_distance then
-                        closest_distance = chest:GetDistanceSqToPoint(pt)
-                        closest_chest = chest
-                    end
-                end
-                if not closest_chest then return end
-                local closest_chest_pt = closest_chest:GetPosition()
-
-                -- 玩家边上进入的洞
-                local offset = FindWalkableOffset(pt, math.random() * TWOPI, 3 + math.random(), 16, false, true,
-                        noentcheckfn, true, true)
-                    or FindWalkableOffset(pt, math.random() * TWOPI, 5 + math.random(), 16, false, true, noentcheckfn,
-                        true, true)
-                    or FindWalkableOffset(pt, math.random() * TWOPI, 7 + math.random(), 16, false, true, noentcheckfn,
-                        true, true)
-                if offset ~= nil then
-                    pt = pt + offset
-                end
-                -- 目标位置边上的洞
-                local closest_chest_pt_offset = FindWalkableOffset(closest_chest_pt, math.random() * TWOPI,
-                        3 + math.random(), 16, false, true,
-                        noentcheckfn, true,
-                        true)
-                    or FindWalkableOffset(closest_chest_pt, math.random() * TWOPI, 5 + math.random(), 16, false, true,
-                        noentcheckfn,
-                        true, true)
-                    or FindWalkableOffset(closest_chest_pt, math.random() * TWOPI, 7 + math.random(), 16, false, true,
-                        noentcheckfn,
-                        true, true)
-                if closest_chest_pt_offset ~= nil then
-                    closest_chest_pt = closest_chest_pt + closest_chest_pt_offset
-                end
-
-                -- 生成虫洞
-                local portal = SpawnPrefab("pocketwatch_portal_entrance")
-                portal.Transform:SetPosition(pt:Get())
-                portal:SpawnExit(closest_chest_pt.recall_worldid, closest_chest_pt.x, closest_chest_pt.y,
-                    closest_chest_pt.z)
-                return true
+                return teleportutil.OpenDoor(act.doer)
             end
         end,
         state = "give",         -- sg
         actiondata = {
-            priority = 4,       -- 优先级
+            priority = -1,      -- 低于给予、存入容器等常规物品动作
             mount_valid = true, -- 骑牛可触发
             canforce = true,
             rangecheckfn = DefaultRangeCheck
@@ -387,6 +371,12 @@ local component_actions = {
             {
                 action = "KISAKIEQUIP",
                 checkfn = function(inst, doer, actionlist, right)
+                    -- 已被收纳的物品不显示“装备”；容器护符由关闭容器动作处理。
+                    if inst ~= nil and amuletutil.IsStoredInAmulet(inst) then
+                        -- 原版 EQUIP 由 equippable 组件直接加入，需要显式移除。
+                        RemoveAction(actionlist, ACTIONS.EQUIP)
+                        return false
+                    end
                     -- 基础检查
                     if inst == nil
                         or inst.prefab == "kisaki_multivariate_amulet"
@@ -394,10 +384,6 @@ local component_actions = {
                         or doer == nil
                         or doer.replica.inventory == nil
                     then
-                        return false
-                    end
-                    -- 已被收纳的物品显示“卸下”，不再显示“装备”，两者互斥。
-                    if amuletutil.IsStoredInAmulet(inst) then
                         return false
                     end
                     -- 装备着融合护符才走这条路。
@@ -411,6 +397,7 @@ local component_actions = {
                     -- 只要物品被融合护符收纳着就能取出
                     return inst ~= nil
                         and amuletutil.IsStoredInAmulet(inst)
+                        and not HasContainer(inst, true)
                         and doer ~= nil
                         and doer.replica.inventory ~= nil
                         and GetMultivariateAmulet(doer.replica.inventory) ~= nil
@@ -543,6 +530,33 @@ local component_actions = {
 -- 修改老动作
 local old_murder_fn = ACTIONS.MURDER.fn
 local old_actions = {
+    -- 旅/渡海之诗与《神曲》的右键法术不先走向目标；有效距离由各自的施法入口校验。
+    {
+        switch = true,
+        id = "CASTSPELL",
+        actiondata = {
+            strfn = function(act)
+                if act ~= nil and act.invobject ~= nil and act.invobject:HasTag("kisaki_staff") then
+                    for _, mode in ipairs(STAFF_MODES) do
+                        if act.invobject:HasTag("kisaki_staff_mode_" .. mode) then
+                            return "KISAKI_" .. string.upper(mode)
+                        end
+                    end
+                    return nil
+                end
+                return old_castspell_strfn ~= nil and old_castspell_strfn(act) or nil
+            end,
+            pre_action_cb = function(act)
+                if old_castspell_pre_action_cb ~= nil then
+                    old_castspell_pre_action_cb(act)
+                end
+                if act.invobject ~= nil
+                    and (act.invobject:HasTag("kisaki_staff") or act.invobject:HasTag("kisaki_star_tool")) then
+                    act.distance = math.huge
+                end
+            end,
+        },
+    },
     --谋杀
     {
         switch = true,

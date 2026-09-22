@@ -487,8 +487,23 @@ end
 -- 瞬移：右键地面瞬移（参考原版 orangestaff 的 blinkstaff 组件效果）
 ------------------------------------------------------------------------------------------------------------------------------
 
+local function CanBlinkToPosition(doer, pos)
+    local x, y, z = pos:Get()
+    local map = TheWorld.Map
+    if map:IsGroundTargetBlocked(pos) then
+        return false
+    end
+    if map:IsPassableAtPoint(x, y, z) then
+        return true
+    end
+    local drownable = doer.components.drownable
+    return drownable ~= nil and drownable.enabled == false
+        and map:IsOceanTileAtPoint(x, y, z)
+        and not map:IsVisualGroundAtPoint(x, y, z)
+end
+
 local function SpellBlink(inst, target, pos, doer)
-    if pos == nil or doer == nil then
+    if pos == nil or doer == nil or not CanBlinkToPosition(doer, pos) then
         return false
     end
 
@@ -520,7 +535,7 @@ local function SpellBlink(inst, target, pos, doer)
         end
         -- 延迟落点再校验一次，期间地形可能变化（如船开走）
         local px, py, pz = pos:Get()
-        if TheWorld.Map:IsPassableAtPoint(px, py, pz) and not TheWorld.Map:IsGroundTargetBlocked(pos) then
+        if CanBlinkToPosition(doer, pos) then
             doer.Physics:Teleport(px, py, pz)
         end
         doer:Show()
@@ -568,6 +583,7 @@ local SpellMoonCall = MakeLightSpell("staffcoldlight")
 -- 月陨/影默：右键地面召唤一次元素袭击（复用原版投石机元素弹 winona_catapult_projectile）
 ------------------------------------------------------------------------------------------------------------------------------
 local STRIKE_AOE_MULT = 2
+
 local function MakeStrikeSpell(element)
     return function(inst, target, pos, doer)
         pos = pos or (target ~= nil and target:GetPosition() or nil)
@@ -578,6 +594,28 @@ local function MakeStrikeSpell(element)
         local rock = SpawnPrefab("winona_catapult_projectile")
         if rock == nil then
             return false
+        end
+        if element == "lunar" then
+            -- 月陨投射物作为本模组的爆炸物处理，兼容启用 tough 配置的发条堆和铥矿雕像。
+            -- 外部模组对发条堆检查 explosive 组件的 explosivedamage，对雕像检查 toughworker 标签。
+            rock:AddTag("explosive")
+            rock:AddTag("toughworker")
+            rock:AddTag("kisaki_moonfall")
+            if rock.components.explosive == nil then
+                rock:AddComponent("explosive")
+            end
+            rock.components.explosive.explosivedamage = 1
+
+            -- 原版 mega 月陨会在命中前将位面伤害设为 120；仅覆盖本次月陨弹的实际攻击值。
+            -- 不修改全局 TUNING，普通投石机仍保持原版伤害。
+            local combat = rock.components.combat
+            local old_doattack = combat ~= nil and combat.DoAttack or nil
+            if old_doattack ~= nil then
+                combat.DoAttack = function(self, target, ...)
+                    rock.components.planardamage:SetBaseDamage(60)
+                    return old_doattack(self, target, ...)
+                end
+            end
         end
         -- 从施法者位置向落点抛射
         rock.Transform:SetPosition(doer.Transform:GetWorldPosition())
@@ -612,13 +650,22 @@ local function IsPlantSeed(item, farm_only)
     end
 
     return item.components.farmplantable == nil and item.components.deployable ~= nil and
-        (item.components.plantable ~= nil or item:HasTag("treeseed") or item:HasTag("deployedplant"))
+        (item.components.plantable ~= nil or item:HasTag("treeseed") or item:HasTag("deployedplant") or
+            item.prefab == "lureplantbulb")
 end
 -- 从人物物品栏第一格开始查找；空格和非种子物品都会继续检查后续格子。
 local function GetFirstPlantSeed(inventory, farm_only)
     for slot = 1, inventory.maxslots do
         local item = inventory:GetItemInSlot(slot)
         if IsPlantSeed(item, farm_only) then
+            return item
+        end
+    end
+end
+local function GetPlantSeed(inventory, farm_only, prefab)
+    for slot = 1, inventory.maxslots do
+        local item = inventory:GetItemInSlot(slot)
+        if IsPlantSeed(item, farm_only) and (prefab == nil or item.prefab == prefab) then
             return item
         end
     end
@@ -644,6 +691,29 @@ local function GetPlantCountAtPoint(pt)
         end
     end
     return count
+end
+-- 按种子自身的原版部署规则判断地皮；特殊种子可通过各自的 custom_candeploy_fn。
+local function CanPlantSeedAtPoint(seed, pt, doer, farm_only)
+    if seed == nil or pt == nil then
+        return false
+    elseif farm_only then
+        -- 九宫格农田种植沿用原有强制种植逻辑，不逐点重新检查土壤实体。
+        return seed.components.farmplantable ~= nil
+    elseif seed.components.deployable ~= nil then
+        -- 右键只检查地皮类型，九宫格实际种植仍然忽略部署间隔。
+        -- CUSTOM 种子（如巨石枝）有自己的地皮规则，不能只用 CanPlantAtPoint，
+        -- 否则会把原版允许的特殊地皮误判为不可种植。
+        local deployable = seed.components.deployable
+        local mode = deployable.GetDeployMode ~= nil and deployable:GetDeployMode() or deployable.mode
+        if mode == DEPLOYMODE.CUSTOM or mode == DEPLOYMODE.DEFAULT then
+            local tile = TheWorld.Map:GetTileAtPoint(pt:Get())
+            return TileGroupManager:IsLandTile(tile) and not TileGroupManager:IsTemporaryTile(tile)
+        elseif mode == DEPLOYMODE.PLANT then
+            return TheWorld.Map:CanPlantAtPoint(pt:Get())
+        end
+        return false
+    end
+    return false
 end
 -- 自定义农作物种植：跳过原版间距检查，首次种植时仍移除对应的耕地实体。
 local function PlantFarmSeedDirectly(seed, pt, doer, soil)
@@ -724,7 +794,7 @@ local function GetNinePlantPoints(pt)
     return points
 end
 
--- 使用原版 spellcaster 的远程快速施法流程，20 格。
+-- 使用原版 spellcaster 的远程快速施法流程，施法范围与旅法杖一致。
 local function PlantNineSeeds(staff, target, pt, doer)
     if doer == nil or pt == nil or doer.components.inventory == nil then
         return
@@ -732,16 +802,19 @@ local function PlantNineSeeds(staff, target, pt, doer)
 
     local inventory = doer.components.inventory
     local farm_only = TheWorld.Map:IsFarmableSoilAtPoint(pt.x, pt.y, pt.z)
-    if GetFirstPlantSeed(inventory, farm_only) == nil then
+    local selected_seed = GetFirstPlantSeed(inventory, farm_only)
+    if selected_seed == nil then
         if doer.components.talker ~= nil then
             doer.components.talker:Say("无可用的种植物")
         end
         return
     end
+    local selected_prefab = selected_seed.prefab
 
     local has_full_point = false
     for _, plant_pt in ipairs(GetNinePlantPoints(pt)) do
-        local seed = GetFirstPlantSeed(inventory, farm_only)
+        -- 一次施法锁定首个选中的种子类型，不用其它种子补齐九宫格。
+        local seed = GetPlantSeed(inventory, farm_only, selected_prefab)
         if seed == nil then
             break -- 种子不足时，后续点位直接忽略。
         end
@@ -755,7 +828,27 @@ local function PlantNineSeeds(staff, target, pt, doer)
 end
 -- 仅允许在可种植陆地施法；种子不足在施法函数内提示，以避免触发默认失败台词。
 local function CanPlantNineSeeds(doer, target, pt)
-    return pt ~= nil and TheWorld.Map:CanPlantAtPoint(pt.x, pt.y, pt.z)
+    if pt == nil or doer == nil or doer.components.inventory == nil
+        or doer:GetDistanceSqToPoint(pt) > TUNING.KISAKI_CASTSPELL_RANGE * TUNING.KISAKI_CASTSPELL_RANGE then
+        return false, "KISAKI_PLANT_OUT_OF_RANGE"
+    end
+
+    if not TheWorld.Map:IsAboveGroundAtPoint(pt.x, pt.y, pt.z, false)
+        or TheWorld.Map:IsGroundTargetBlocked(pt) then
+        return false, "KISAKI_INVALID_PLANT_TURF"
+    end
+
+    local farm_only = TheWorld.Map:IsFarmableSoilAtPoint(pt.x, pt.y, pt.z)
+    local seed = GetFirstPlantSeed(doer.components.inventory, farm_only)
+    if seed == nil then
+        return false, "KISAKI_NO_PLANT_SEED"
+    end
+
+    -- 校验鼠标落点本身；九宫格其余点位仍由原有强制种植逻辑处理。
+    if not CanPlantSeedAtPoint(seed, pt, doer, farm_only) then
+        return false, "KISAKI_INVALID_PLANT_TURF"
+    end
+    return true
 end
 
 return {

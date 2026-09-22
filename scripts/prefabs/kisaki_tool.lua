@@ -468,7 +468,7 @@ tool_defs.kisaki_star_tool = {
         inst.components.spellcaster.quickcast = true
         inst.components.spellcaster:SetCanCastFn(CanPlantNineSeeds)
         inst.components.spellcaster:SetSpellFn(PlantNineSeeds)
-        inst.controller_use_attack_distance = ACTIONS.CASTSPELL.distance
+        inst.controller_use_attack_distance = TUNING.KISAKI_CASTSPELL_RANGE
 
         inst:AddComponent("useableitem") -- 右键切换锤、铲、捕虫、锄头功能
         inst.components.useableitem:SetOnUseFn(ToggleAuxiliaryTools)
